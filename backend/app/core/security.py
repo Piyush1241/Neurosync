@@ -21,14 +21,19 @@ def decode_access_token(token: str) -> Optional[dict]:
 
 def hash_password(password: str) -> str:
     salt = secrets.token_hex(16)
-    hashed = hashlib.sha256(f"{salt}{password}".encode()).hexdigest()
-    return f"{salt}:{hashed}"
+    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100000)
+    return f"pbkdf2:{salt}:{key.hex()}"
 
 def verify_password(plain: str, hashed: str) -> bool:
     try:
-        salt, hash_val = hashed.split(":")
-        expected = hashlib.sha256(f"{salt}{plain}".encode()).hexdigest()
-        return hmac.compare_digest(expected, hash_val)
+        if hashed.startswith("pbkdf2:"):
+            _, salt, hash_val = hashed.split(":")
+            expected = hashlib.pbkdf2_hmac('sha256', plain.encode('utf-8'), salt.encode('utf-8'), 100000).hex()
+            return hmac.compare_digest(expected, hash_val)
+        else:
+            salt, hash_val = hashed.split(":")
+            expected = hashlib.sha256(f"{salt}{plain}".encode()).hexdigest()
+            return hmac.compare_digest(expected, hash_val)
     except Exception:
         return False
 

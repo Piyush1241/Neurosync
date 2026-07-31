@@ -97,29 +97,4 @@ async def login(
     }
 
 
-@router.get("/users")
-async def get_all_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    return {
-        "total": len(users),
-        "users": [
-            {
-                "user_id": u.user_id,
-                "email": u.email,
-                "password_hash": u.password_hash,
-                "created_at": str(u.created_at) if u.created_at else None
-            }
-            for u in users
-        ]
-    }
-
-
-@router.delete("/users")
-async def delete_all_users(db: Session = Depends(get_db)):
-    deleted_count = db.query(User).delete()
-    db.commit()
-    logger.info(f"Deleted {deleted_count} users from database")
-    return {
-        "message": f"Successfully deleted all {deleted_count} users",
-        "deleted_count": deleted_count
-    }
+

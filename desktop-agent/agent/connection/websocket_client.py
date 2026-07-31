@@ -99,12 +99,9 @@ class WebSocketClient:
     async def _do_connect(self):
         """Low‑level connect, called by ConnectionManager."""
         logger.info(f"Connecting to {self.url}")
-        # Disable SSL verification if needed (optional, use ssl=False only for testing)
         ssl_context = None
         if self.url.startswith("wss://"):
             ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
 
         self._websocket = await websockets.connect(
             self.url,

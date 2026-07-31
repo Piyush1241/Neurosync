@@ -105,7 +105,15 @@ async def handle_agent_connection(websocket: WebSocket, manager: ConnectionManag
                 user_id = payload.get("sub")
                 logger.info(f"Device {device_id} authenticated as user {user_id}")
             else:
-                logger.warning(f"Device {device_id} sent invalid token")
+                logger.warning(f"Device {device_id} sent invalid token, disconnecting")
+                await websocket.send_json({"error": "Unauthorized: Invalid token"})
+                await websocket.close(code=1008)
+                return
+        else:
+            logger.warning(f"Device {device_id} connected without token, disconnecting")
+            await websocket.send_json({"error": "Unauthorized: Token required"})
+            await websocket.close(code=1008)
+            return
 
         info = {
             "device_id":   device_id,

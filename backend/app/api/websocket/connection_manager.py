@@ -1,6 +1,6 @@
 import logging
 from fastapi import WebSocket
-from typing import Dict
+from typing import Dict, Optional
 
 logger = logging.getLogger("connection_manager")
 
@@ -20,7 +20,7 @@ class ConnectionManager:
             del self.connected_agents[device_id]
             logger.info(f"Agent disconnected: {device_id} | Total: {len(self.connected_agents)}")
 
-    def get_device(self, device_id: str) -> WebSocket | None:
+    def get_device(self, device_id: str) -> Optional[WebSocket]:
         return self.connected_agents.get(device_id)
 
     def get_all_devices(self) -> list:

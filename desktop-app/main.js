@@ -2,18 +2,22 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
-const https = require('https');
+const http = require('http');
 
 let mainWindow;
 let agentProcess;
 let statsProcess;
 let authToken = null;
 
+const customPython = '/Library/Frameworks/Python.framework/Versions/3.12/bin/python3';
 const pythonExe = process.platform === 'win32'
   ? 'python'
-  : '/Library/Frameworks/Python.framework/Versions/3.12/bin/python3';
+  : (fs.existsSync(customPython) ? customPython : 'python3');
 
-const BACKEND = 'neurosync-production-0f2b.up.railway.app';
+const BACKEND_HOST = process.env.BACKEND_HOST || 'localhost';
+const BACKEND_PORT = process.env.BACKEND_PORT || 8000;
+const BACKEND_SECURE = process.env.BACKEND_SECURE === 'true';
+
 const CREDENTIALS_FILE = path.join(app.getPath('userData'), 'credentials.json');
 
 function saveCredentials(email, token) {
@@ -36,8 +40,10 @@ function clearCredentials() {
 function loginToBackend(email, password) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({ email, password });
-    const req = https.request({
-      hostname: BACKEND,
+    const transport = BACKEND_SECURE ? https : http;
+    const req = transport.request({
+      hostname: BACKEND_HOST,
+      port: BACKEND_PORT,
       path: '/api/v1/login',
       method: 'POST',
       headers: {
@@ -99,7 +105,8 @@ function startAgent(token) {
   const agentScript = app.isPackaged
   ? path.join(process.resourcesPath, 'desktop-agent', 'agent', 'main.py')
   : path.join(__dirname, '..', 'desktop-agent', 'agent', 'main.py');
-  const wsUrl = `wss://${BACKEND}/ws`;
+  const wsProto = BACKEND_SECURE ? 'wss' : 'ws';
+  const wsUrl = `${wsProto}://${BACKEND_HOST}:${BACKEND_PORT}/ws`;
   const env = { ...process.env, NEUROSYNC_TOKEN: token || '' };
 
   agentProcess = spawn(pythonExe, [agentScript, '--url', wsUrl], { env });

@@ -14,9 +14,11 @@ const pythonExe = process.platform === 'win32'
   ? 'python'
   : (fs.existsSync(customPython) ? customPython : 'python3');
 
-const BACKEND_HOST = process.env.BACKEND_HOST || 'localhost';
-const BACKEND_PORT = process.env.BACKEND_PORT || 8000;
-const BACKEND_SECURE = process.env.BACKEND_SECURE === 'true';
+const https = require('https');
+
+const BACKEND_HOST = process.env.BACKEND_HOST || 'neurosync-4giu.onrender.com';
+const BACKEND_PORT = process.env.BACKEND_PORT || 443;
+const BACKEND_SECURE = process.env.BACKEND_SECURE !== 'false';
 
 const CREDENTIALS_FILE = path.join(app.getPath('userData'), 'credentials.json');
 
@@ -106,7 +108,8 @@ function startAgent(token) {
   ? path.join(process.resourcesPath, 'desktop-agent', 'agent', 'main.py')
   : path.join(__dirname, '..', 'desktop-agent', 'agent', 'main.py');
   const wsProto = BACKEND_SECURE ? 'wss' : 'ws';
-  const wsUrl = `${wsProto}://${BACKEND_HOST}:${BACKEND_PORT}/ws`;
+  const portStr = (BACKEND_PORT == 443 || BACKEND_PORT == 80) ? '' : `:${BACKEND_PORT}`;
+  const wsUrl = `${wsProto}://${BACKEND_HOST}${portStr}/ws`;
   const env = { ...process.env, NEUROSYNC_TOKEN: token || '' };
 
   agentProcess = spawn(pythonExe, [agentScript, '--url', wsUrl], { env });

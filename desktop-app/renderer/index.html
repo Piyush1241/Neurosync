@@ -438,7 +438,7 @@
     </div>
     <div class="net-stat">
       <span class="net-stat-label">BACKEND</span>
-      <span class="net-stat-val" style="color:var(--green)">Railway ✓</span>
+      <span class="net-stat-val" style="color:var(--green)">Render ✓</span>
     </div>
   </div>
 
@@ -460,7 +460,7 @@ function pushHistory(key, val) {
   if (history[key].length > MAX_POINTS) history[key].shift();
 }
 
-function drawSparkline(canvasId, data, color) {
+function drawSparkline(canvasId, data, color, maxScale = 100) {
   const canvas = document.getElementById(canvasId);
   if (!canvas || data.length < 2) return;
   const w = canvas.parentElement.offsetWidth - 24;
@@ -483,7 +483,7 @@ function drawSparkline(canvasId, data, color) {
 
   for (let i = 0; i < data.length; i++) {
     const x = i * step;
-    const y = h - (data[i] / 100) * (h - 4) - 2;
+    const y = h - Math.min(1, data[i] / maxScale) * (h - 4) - 2;
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   }
   ctx.stroke();
@@ -500,62 +500,72 @@ function drawSparkline(canvasId, data, color) {
   ctx.fill();
 }
 
-// --- Stats engine ---
-let stats = { cpu: 40, ram: 55, disk: 35, net: 20 };
-
-function randomWalk(v, min, max, step) {
-  return Math.min(max, Math.max(min, v + (Math.random() - 0.5) * step));
-}
-
-function updateStats() {
-  stats.cpu  = randomWalk(stats.cpu,  5, 92, 10);
-  stats.ram  = randomWalk(stats.ram,  30, 85,  5);
-  stats.disk = randomWalk(stats.disk,  5, 70,  8);
-  stats.net  = randomWalk(stats.net,   2, 60, 12);
-
+function applyRealStats(data) {
   const r = v => Math.round(v);
 
   // Sidebar bars
-  document.getElementById('cpu-pct').textContent  = r(stats.cpu)  + '%';
-  document.getElementById('ram-pct').textContent  = r(stats.ram)  + '%';
-  document.getElementById('disk-pct').textContent = r(stats.disk) + '%';
-  document.getElementById('net-pct').textContent  = r(stats.net)  + '%';
-  document.getElementById('cpu-bar').style.width  = stats.cpu  + '%';
-  document.getElementById('ram-bar').style.width  = stats.ram  + '%';
-  document.getElementById('disk-bar').style.width = stats.disk + '%';
-  document.getElementById('net-bar').style.width  = stats.net  + '%';
+  if (data.cpu !== undefined) {
+    document.getElementById('cpu-pct').textContent  = r(data.cpu)  + '%';
+    document.getElementById('cpu-bar').style.width  = data.cpu  + '%';
+    document.getElementById('big-cpu').textContent  = r(data.cpu);
+    pushHistory('cpu', data.cpu);
+  }
+  if (data.ram !== undefined) {
+    document.getElementById('ram-pct').textContent  = r(data.ram)  + '%';
+    document.getElementById('ram-bar').style.width  = data.ram  + '%';
+    document.getElementById('big-ram').textContent  = r(data.ram);
+    pushHistory('ram', data.ram);
+  }
+  if (data.disk !== undefined) {
+    document.getElementById('disk-pct').textContent = r(data.disk) + '%';
+    document.getElementById('disk-bar').style.width = data.disk + '%';
+    document.getElementById('big-disk').textContent = r(data.disk);
+    pushHistory('disk', data.disk);
+  }
+  if (data.net_recv !== undefined) {
+    const totalNetMB = Math.max(0.1, (data.net_recv || 0) + (data.net_sent || 0));
+    const netPct = Math.min(100, Math.round(totalNetMB * 10));
+    document.getElementById('net-pct').textContent  = (totalNetMB).toFixed(1) + ' MB/s';
+    document.getElementById('net-bar').style.width  = netPct + '%';
+    document.getElementById('big-net').textContent  = (totalNetMB).toFixed(1);
+    
+    document.getElementById('net-dl').textContent   = (data.net_recv || 0).toFixed(1) + ' MB/s';
+    document.getElementById('net-ul').textContent   = (data.net_sent || 0).toFixed(1) + ' MB/s';
+    pushHistory('net', totalNetMB);
+  }
 
-  // Big numbers
-  document.getElementById('big-cpu').textContent  = r(stats.cpu);
-  document.getElementById('big-ram').textContent  = r(stats.ram);
-  document.getElementById('big-disk').textContent = r(stats.disk);
-  document.getElementById('big-net').textContent  = (stats.net * 0.04).toFixed(1);
+  if (data.procs !== undefined) {
+    document.getElementById('info-procs').textContent = data.procs;
+  }
+  if (data.hostname && data.hostname !== 'UNKNOWN') {
+    document.getElementById('info-host').textContent = data.hostname;
+  }
+  if (data.uptime !== undefined) {
+    uptimeSec = data.uptime;
+  }
 
-  // Network panel
-  document.getElementById('net-ping').textContent = (8 + Math.random() * 18).toFixed(0) + ' ms';
-  document.getElementById('net-dl').textContent   = (stats.net * 0.04).toFixed(1) + ' MB/s';
-  document.getElementById('net-ul').textContent   = (stats.net * 0.015).toFixed(1) + ' MB/s';
-
-  // Processes fluctuate slightly
-  document.getElementById('info-procs').textContent = (180 + Math.floor(Math.random() * 20)) + '';
-
-  // Sparklines
-  pushHistory('cpu',  stats.cpu);
-  pushHistory('ram',  stats.ram);
-  pushHistory('disk', stats.disk);
-  pushHistory('net',  stats.net);
-
-  drawSparkline('cpu-canvas',  history.cpu,  '#00e5ff');
-  drawSparkline('ram-canvas',  history.ram,  '#b39ddb');
-  drawSparkline('disk-canvas', history.disk, '#ffb300');
-  drawSparkline('net-canvas',  history.net,  '#00ff88');
+  drawSparkline('cpu-canvas',  history.cpu,  '#00e5ff', 100);
+  drawSparkline('ram-canvas',  history.ram,  '#b39ddb', 100);
+  drawSparkline('disk-canvas', history.disk, '#ffb300', 100);
+  drawSparkline('net-canvas',  history.net,  '#00ff88', 10);
 }
+
+// --- Ping measurement ---
+async function checkPing() {
+  const start = Date.now();
+  try {
+    await fetch('https://neurosync-4giu.onrender.com/', { method: 'HEAD', cache: 'no-store' });
+    const ping = Date.now() - start;
+    document.getElementById('net-ping').textContent = ping + ' ms';
+  } catch {
+    document.getElementById('net-ping').textContent = '— ms';
+  }
+}
+setInterval(checkPing, 5000);
+checkPing();
 
 // --- Device info ---
 document.getElementById('info-os').textContent = navigator.platform.includes('Win') ? 'WIN 11' : 'DARWIN';
-
-// Get real hostname via agent log parsing or fallback
-document.getElementById('info-host').textContent = 'NEUROSYNC';
 
 // --- Uptime counter ---
 let uptimeSec = 0;
@@ -581,8 +591,11 @@ function addLog(text, type = 'info') {
 
 // --- Electron IPC ---
 if (window.electronAPI) {
+  window.electronAPI.onStatsUpdate((data) => {
+    applyRealStats(data);
+  });
+
   window.electronAPI.onAgentLog((raw) => {
-    // Parse hostname from agent startup line
     const hostMatch = raw.match(/Starting Desktop Agent on ([^\s]+)/);
     if (hostMatch) {
       document.getElementById('info-host').textContent = hostMatch[1].replace('.local','').toUpperCase();
@@ -593,7 +606,6 @@ if (window.electronAPI) {
     else if (raw.includes('ERROR') || raw.includes('error'))                     type = 'err';
     else if (raw.includes('connected') || raw.includes('registered') || raw.includes('started') || raw.includes('established')) type = 'ok';
 
-    // Strip log prefix noise
     const clean = raw.replace(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} \[.*?\] [\w.]+: /, '');
     addLog(clean || raw, type);
   });
@@ -613,7 +625,7 @@ if (window.electronAPI) {
 // --- Boot sequence logs ---
 const bootLogs = [
   ['NeuroSync Desktop Agent initializing...', 'info'],
-  ['Connecting to Railway backend...', 'info'],
+  ['Connecting to Render backend...', 'info'],
   ['WebSocket handshake in progress...', 'info'],
   ['WebSocket connected ✓', 'ok'],
   ['Device registered successfully ✓', 'ok'],
@@ -623,12 +635,6 @@ const bootLogs = [
 bootLogs.forEach(([msg, type], i) => {
   setTimeout(() => addLog(msg, type), i * 400);
 });
-
-// --- Start stats loop (delay to let layout settle) ---
-setTimeout(() => {
-  updateStats();
-  setInterval(updateStats, 1500);
-}, 300);
 </script>
 </body>
 </html>

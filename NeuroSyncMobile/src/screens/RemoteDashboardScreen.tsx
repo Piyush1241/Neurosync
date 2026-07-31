@@ -132,7 +132,7 @@ export default function RemoteDashboardScreen({navigation, route}: any) {
           ))}
         </View>
 
-        <Text style={styles.hint}>{'// COMMANDS ROUTED VIA RAILWAY BACKEND'}</Text>
+        <Text style={styles.hint}>{'// COMMANDS ROUTED VIA RENDER BACKEND'}</Text>
       </ScrollView>
     </View>
   );

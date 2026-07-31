@@ -33,7 +33,7 @@ def parse_args():
     parser.add_argument(
         "--url",
         type=str,
-        default=os.getenv("BACKEND_WS_URL", "ws://localhost:8000/ws"),
+        default=os.getenv("BACKEND_WS_URL", "wss://neurosync-4giu.onrender.com/ws"),
         help="WebSocket server URL (e.g., ws://localhost:8000/ws or wss://example.com/ws)"
     )
     parser.add_argument(

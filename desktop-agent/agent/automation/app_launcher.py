@@ -51,14 +51,16 @@ class AppLauncher:
             logger.exception(f"Failed to launch {label}")
             return {"status": "error", "message": str(e)}
 
-    # ── Browser launchers (Windows now uses direct exe) ─────────────────────
+    # ── Browser launchers ───────────────────────────────────────────────────
 
     @classmethod
     def open_chrome(cls, url: str = "") -> dict:
         sys = cls._system()
         url_arg = [url] if url else []
 
-        if sys == "Windows":
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "Google Chrome"] + url_arg, label="chrome")
+        elif sys == "Windows":
             chrome_paths = [
                 r"%PROGRAMFILES%\Google\Chrome\Application\chrome.exe",
                 r"%PROGRAMFILES(X86)%\Google\Chrome\Application\chrome.exe",
@@ -68,7 +70,6 @@ class AppLauncher:
             if not exe:
                 return {"status": "error", "message": "Chrome not found (searched Program Files, LocalAppData)"}
             return cls._launch([exe] + url_arg, label="chrome")
-
         elif sys == "Linux":
             exe = next((e for e in ["google-chrome", "chromium-browser", "chromium"] if cls._which(e)), None)
             if not exe:
@@ -82,7 +83,9 @@ class AppLauncher:
         sys = cls._system()
         url_arg = [url] if url else []
 
-        if sys == "Windows":
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "Firefox"] + url_arg, label="firefox")
+        elif sys == "Windows":
             firefox_paths = [
                 r"%PROGRAMFILES%\Mozilla Firefox\firefox.exe",
                 r"%PROGRAMFILES(X86)%\Mozilla Firefox\firefox.exe",
@@ -91,7 +94,6 @@ class AppLauncher:
             if not exe:
                 return {"status": "error", "message": "Firefox not found (searched Program Files)"}
             return cls._launch([exe] + url_arg, label="firefox")
-
         elif sys == "Linux":
             return cls._launch(["firefox"] + url_arg, label="firefox")
 
@@ -102,7 +104,9 @@ class AppLauncher:
         sys = cls._system()
         url_arg = [url] if url else []
 
-        if sys == "Windows":
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "Microsoft Edge"] + url_arg, label="edge")
+        elif sys == "Windows":
             edge_paths = [
                 r"%PROGRAMFILES(X86)%\Microsoft\Edge\Application\msedge.exe",
                 r"%PROGRAMFILES%\Microsoft\Edge\Application\msedge.exe",
@@ -111,23 +115,23 @@ class AppLauncher:
             if not exe:
                 return {"status": "error", "message": "Microsoft Edge not found (searched Program Files)"}
             return cls._launch([exe] + url_arg, label="edge")
-
         elif sys == "Linux":
             return cls._launch(["microsoft-edge"] + url_arg, label="edge")
 
         return {"status": "error", "message": f"Unsupported OS: {sys}"}
 
-    # ── Editors / IDEs (unchanged – already correct) ────────────────────────
+    # ── Editors / IDEs ──────────────────────────────────────────────────────
 
     @classmethod
     def open_vscode(cls, path: str = "") -> dict:
         sys = cls._system()
-        if sys == "Windows":
+        if sys == "Darwin":
             if cls._which("code"):
-                return cls._launch(
-                    ["code"] + ([path] if path else []),
-                    label="vscode"
-                )
+                return cls._launch(["code"] + ([path] if path else []), label="vscode")
+            return cls._launch(["open", "-a", "Visual Studio Code"] + ([path] if path else []), label="vscode")
+        elif sys == "Windows":
+            if cls._which("code"):
+                return cls._launch(["code"] + ([path] if path else []), label="vscode")
             candidates = [
                 os.path.expandvars(r"%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe"),
                 os.path.expandvars(r"%PROGRAMFILES%\Microsoft VS Code\Code.exe"),
@@ -135,10 +139,7 @@ class AppLauncher:
             ]
             for exe in candidates:
                 if os.path.exists(exe):
-                    return cls._launch(
-                        [exe] + ([path] if path else []),
-                        label="vscode"
-                    )
+                    return cls._launch([exe] + ([path] if path else []), label="vscode")
             return {"status": "error", "message": "VSCode not found"}
         elif sys == "Linux":
             return cls._launch(["code"] + ([path] if path else []), label="vscode")
@@ -147,7 +148,10 @@ class AppLauncher:
     @classmethod
     def open_notepad(cls, file_path: str = "") -> dict:
         sys = cls._system()
-        if sys == "Windows":
+        if sys == "Darwin":
+            args = ["open", "-a", "TextEdit"] + ([file_path] if file_path else [])
+            return cls._launch(args, label="notepad")
+        elif sys == "Windows":
             args = ["notepad"] + ([file_path] if file_path else [])
             return cls._launch(args, label="notepad")
         elif sys == "Linux":
@@ -160,7 +164,9 @@ class AppLauncher:
     @classmethod
     def open_sublime(cls, file_path: str = "") -> dict:
         sys = cls._system()
-        if sys == "Windows":
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "Sublime Text"] + ([file_path] if file_path else []), label="sublime")
+        elif sys == "Windows":
             exe = r"C:\Program Files\Sublime Text\sublime_text.exe"
             args = [exe] + ([file_path] if file_path else [])
             return cls._launch(args, label="sublime")
@@ -171,18 +177,22 @@ class AppLauncher:
     @classmethod
     def open_pycharm(cls, project_path: str = "") -> dict:
         sys = cls._system()
-        if sys == "Windows":
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "PyCharm"] + ([project_path] if project_path else []), label="pycharm")
+        elif sys == "Windows":
             return cls._launch(["charm"] + ([project_path] if project_path else []), label="pycharm")
         elif sys == "Linux":
             return cls._launch(["pycharm"] + ([project_path] if project_path else []), label="pycharm")
         return {"status": "error", "message": f"Unsupported OS: {sys}"}
 
-    # ── Terminal (unchanged) ────────────────────────────────────────────────
+    # ── Terminal ────────────────────────────────────────────────────────────
 
     @classmethod
     def open_terminal(cls) -> dict:
         sys = cls._system()
-        if sys == "Windows":
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "Terminal"], label="terminal")
+        elif sys == "Windows":
             if cls._which("wt"):
                 return cls._launch(["wt"], label="terminal")
             return cls._launch(["cmd"], label="cmd")
@@ -193,30 +203,34 @@ class AppLauncher:
             return {"status": "error", "message": "No terminal emulator found"}
         return {"status": "error", "message": f"Unsupported OS: {sys}"}
 
-    # ── Office / Productivity (keep `start` – kill won't work, but tests don't require it) ──
+    # ── Office / Productivity ───────────────────────────────────────────────
 
     @classmethod
     def open_excel(cls, file_path: str = "") -> dict:
         sys = cls._system()
-        if sys == "Windows":
-            # Note: Using `start` means kill_app will not work.
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "Microsoft Excel"] + ([file_path] if file_path else []), label="excel")
+        elif sys == "Windows":
             cmd = f'start excel {" " + file_path if file_path else ""}'
             return cls._launch(cmd, shell=True, label="excel")
-        return {"status": "error", "message": "Excel only available on Windows"}
+        return {"status": "error", "message": "Excel not available on this OS"}
 
     @classmethod
     def open_word(cls, file_path: str = "") -> dict:
         sys = cls._system()
-        if sys == "Windows":
-            # Note: Using `start` means kill_app will not work.
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "Microsoft Word"] + ([file_path] if file_path else []), label="word")
+        elif sys == "Windows":
             args = ["start", "winword"] + ([file_path] if file_path else [])
             return cls._launch(args, shell=True, label="word")
-        return {"status": "error", "message": "Word only available on Windows"}
+        return {"status": "error", "message": "Word not available on this OS"}
 
     @classmethod
     def open_calculator(cls) -> dict:
         sys = cls._system()
-        if sys == "Windows":
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "Calculator"], label="calculator")
+        elif sys == "Windows":
             return cls._launch(["calc"], label="calculator")
         elif sys == "Linux":
             for calc in ["gnome-calculator", "kcalc", "galculator"]:
@@ -225,12 +239,14 @@ class AppLauncher:
             return {"status": "error", "message": "No calculator found"}
         return {"status": "error", "message": f"Unsupported OS: {sys}"}
 
-    # ── Media (unchanged) ───────────────────────────────────────────────────
+    # ── Media ───────────────────────────────────────────────────────────────
 
     @classmethod
     def open_vlc(cls, file_path: str = "") -> dict:
         sys = cls._system()
-        if sys == "Windows":
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "VLC"] + ([file_path] if file_path else []), label="vlc")
+        elif sys == "Windows":
             vlc = r"C:\Program Files\VideoLAN\VLC\vlc.exe"
             args = [vlc] + ([file_path] if file_path else [])
             return cls._launch(args, label="vlc")
@@ -241,7 +257,9 @@ class AppLauncher:
     @classmethod
     def open_spotify(cls) -> dict:
         sys = cls._system()
-        if sys == "Windows":
+        if sys == "Darwin":
+            return cls._launch(["open", "-a", "Spotify"], label="spotify")
+        elif sys == "Windows":
             candidates = [
                 os.path.expandvars(r"%APPDATA%\Spotify\Spotify.exe"),
                 os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\WindowsApps\Spotify.exe"),
@@ -258,7 +276,9 @@ class AppLauncher:
     @classmethod
     def open_file_manager(cls, path: str = "") -> dict:
         sys = cls._system()
-        if sys == "Windows":
+        if sys == "Darwin":
+            return cls._launch(["open"] + ([path] if path else ["."]), label="finder")
+        elif sys == "Windows":
             args = ["explorer"] + ([path] if path else [])
             return cls._launch(args, label="explorer")
         elif sys == "Linux":

@@ -3,6 +3,7 @@ import json
 import sys
 import time
 
+app_start_time = time.time()
 last_net = psutil.net_io_counters()
 last_time = time.time()
 
@@ -26,7 +27,17 @@ def get_stats():
     ram = psutil.virtual_memory().percent
     disk = psutil.disk_usage('/').percent if sys.platform != 'win32' else psutil.disk_usage('C:\\').percent
     
-    uptime = int(now - psutil.boot_time())
+    # OS Detection
+    if sys.platform == 'darwin':
+        os_name = 'MACOS'
+    elif sys.platform == 'win32':
+        os_name = 'WINDOWS'
+    elif sys.platform.startswith('linux'):
+        os_name = 'LINUX'
+    else:
+        os_name = sys.platform.upper()
+
+    app_uptime = int(now - app_start_time)
 
     return {
         "cpu": round(cpu, 1),
@@ -35,7 +46,8 @@ def get_stats():
         "net_recv": recv_mb_s,
         "net_sent": sent_mb_s,
         "procs": len(psutil.pids()),
-        "uptime": uptime,
+        "uptime": app_uptime,
+        "os": os_name,
         "hostname": psutil.os.uname().nodename.split('.')[0].upper() if hasattr(psutil.os, 'uname') else "UNKNOWN"
     }
 

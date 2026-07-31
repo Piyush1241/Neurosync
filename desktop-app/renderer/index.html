@@ -534,6 +534,9 @@ function applyRealStats(data) {
     pushHistory('net', totalNetMB);
   }
 
+  if (data.os) {
+    document.getElementById('info-os').textContent = data.os;
+  }
   if (data.procs !== undefined) {
     document.getElementById('info-procs').textContent = data.procs;
   }
@@ -565,7 +568,8 @@ setInterval(checkPing, 5000);
 checkPing();
 
 // --- Device info ---
-document.getElementById('info-os').textContent = navigator.platform.includes('Win') ? 'WIN 11' : 'DARWIN';
+const platformName = navigator.userAgent.includes('Win') ? 'WINDOWS' : (navigator.userAgent.includes('Mac') ? 'MACOS' : 'LINUX');
+document.getElementById('info-os').textContent = platformName;
 
 // --- Uptime counter ---
 let uptimeSec = 0;

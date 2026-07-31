@@ -1,6 +1,6 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'https://neurosync-production-0f2b.up.railway.app',
+  baseURL: 'https://neurosync-4giu.onrender.com',
   timeout: 10000,
 });

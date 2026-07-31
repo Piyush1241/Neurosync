@@ -129,8 +129,14 @@ function startAgent(token) {
 }
 
 function startStats() {
-  const statsScript = path.join(__dirname, 'renderer', 'stats.py');
-  statsProcess = spawn(pythonExe, [statsScript]);
+  const candidatePaths = [
+    path.join(__dirname, 'renderer', 'stats.py'),
+    path.join(process.resourcesPath, 'app.asar.unpacked', 'renderer', 'stats.py'),
+    path.join(process.resourcesPath, 'app', 'renderer', 'stats.py')
+  ];
+
+  const scriptToRun = candidatePaths.find(p => fs.existsSync(p)) || candidatePaths[0];
+  statsProcess = spawn(pythonExe, [scriptToRun]);
 
   let buffer = '';
   statsProcess.stdout.on('data', (data) => {
@@ -142,9 +148,16 @@ function startStats() {
       try {
         const stats = JSON.parse(line.trim());
         if (mainWindow) mainWindow.webContents.send('stats-update', stats);
-      } catch {}
+      } catch (e) {
+        console.error('Stats JSON parse error:', e);
+      }
     }
   });
+
+  statsProcess.stderr.on('data', (data) => {
+    console.error('statsProcess error:', data.toString());
+  });
+
   statsProcess.on('close', () => setTimeout(startStats, 3000));
 }
 

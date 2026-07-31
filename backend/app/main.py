@@ -36,6 +36,25 @@ app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 @app.on_event("startup")
 async def startup():
     init_db()
+    # Ensure default user exists
+    from app.db.database import SessionLocal
+    from app.models.user import User
+    from app.core.security import hash_password
+    db = SessionLocal()
+    try:
+        if not db.query(User).filter(User.email == "sumit@neurosync.com").first():
+            user = User(
+                email="sumit@neurosync.com",
+                password_hash=hash_password("yourpassword")
+            )
+            db.add(user)
+            db.commit()
+            logger.info("Auto-seeded default user: sumit@neurosync.com")
+    except Exception as e:
+        logger.error(f"Error seeding user: {e}")
+    finally:
+        db.close()
+
     logger.info(f"NeuroSync backend started on {settings.HOST}:{settings.PORT}")
 
 

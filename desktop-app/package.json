@@ -15,6 +15,9 @@
       "preload.js",
       "renderer/**/*"
     ],
+    "asarUnpack": [
+      "renderer/stats.py"
+    ],
     "extraResources": [
       {
         "from": "../desktop-agent",

@@ -1,5 +1,6 @@
 # pyrefly: ignore [missing-import]
 from sqlalchemy import Column, String, DateTime
+# pyrefly: ignore [missing-import]
 from sqlalchemy.sql import func
 from app.db.database import Base
 

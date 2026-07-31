@@ -69,3 +69,14 @@ async def get_device(
         "status":      "online" if is_online else "offline",
         "last_seen":   str(d.last_seen) if d.last_seen else None
     }
+@router.get("/debug/token")
+async def debug_token(authorization: str = Header(...)):
+    from app.core.security import decode_access_token
+    from app.config import settings
+    token = authorization.split(" ", 1)[1] if authorization.startswith("Bearer ") else authorization
+    payload = decode_access_token(token)
+    return {
+        "payload": payload,
+        "secret_preview": settings.JWT_SECRET[:8] + "...",
+        "algorithm": settings.JWT_ALGORITHM,
+    }

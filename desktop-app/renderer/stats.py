@@ -6,8 +6,8 @@ import time
 last_net = psutil.net_io_counters()
 last_time = time.time()
 
-while True:
-    time.sleep(1.5)
+def get_stats():
+    global last_net, last_time
     now = time.time()
     dt = max(now - last_time, 0.1)
     
@@ -18,7 +18,7 @@ while True:
     
     recv_mb_s = round(max(0, recv_bytes / dt) / (1024 * 1024), 2)
     sent_mb_s = round(max(0, sent_bytes / dt) / (1024 * 1024), 2)
-    
+
     last_net = current_net
     last_time = now
 
@@ -28,7 +28,7 @@ while True:
     
     uptime = int(now - psutil.boot_time())
 
-    data = {
+    return {
         "cpu": round(cpu, 1),
         "ram": round(ram, 1),
         "disk": round(disk, 1),
@@ -38,4 +38,10 @@ while True:
         "uptime": uptime,
         "hostname": psutil.os.uname().nodename.split('.')[0].upper() if hasattr(psutil.os, 'uname') else "UNKNOWN"
     }
-    print(json.dumps(data), flush=True)
+
+# Initial emit
+print(json.dumps(get_stats()), flush=True)
+
+while True:
+    time.sleep(1.5)
+    print(json.dumps(get_stats()), flush=True)

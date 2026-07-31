@@ -129,11 +129,16 @@ function startAgent(token) {
 }
 
 function startStats() {
-  const candidatePaths = [
-    path.join(__dirname, 'renderer', 'stats.py'),
-    path.join(process.resourcesPath, 'app.asar.unpacked', 'renderer', 'stats.py'),
-    path.join(process.resourcesPath, 'app', 'renderer', 'stats.py')
-  ];
+  const candidatePaths = app.isPackaged
+    ? [
+        path.join(process.resourcesPath, 'app.asar.unpacked', 'renderer', 'stats.py'),
+        path.join(process.resourcesPath, 'app', 'renderer', 'stats.py'),
+        path.join(__dirname, 'renderer', 'stats.py')
+      ]
+    : [
+        path.join(__dirname, 'renderer', 'stats.py'),
+        path.join(process.resourcesPath, 'app.asar.unpacked', 'renderer', 'stats.py')
+      ];
 
   const scriptToRun = candidatePaths.find(p => fs.existsSync(p)) || candidatePaths[0];
   statsProcess = spawn(pythonExe, [scriptToRun]);

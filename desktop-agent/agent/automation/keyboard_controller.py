@@ -2,6 +2,7 @@ import pyautogui
 import pyperclip
 import time
 import logging
+import platform
 from typing import Optional
 
 pyautogui.FAILSAFE = True
@@ -172,7 +173,11 @@ class KeyboardController:
     @staticmethod
     def close_window() -> dict:
         try:
-            pyautogui.hotkey("alt", "f4")
+            sys_name = platform.system()
+            if sys_name == "Darwin":
+                pyautogui.hotkey("command", "w")
+            else:
+                pyautogui.hotkey("alt", "f4")
             return {"status": "success", "action": "close_window"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -180,7 +185,11 @@ class KeyboardController:
     @staticmethod
     def switch_window() -> dict:
         try:
-            pyautogui.hotkey("alt", "tab")
+            sys_name = platform.system()
+            if sys_name == "Darwin":
+                pyautogui.hotkey("command", "tab")
+            else:
+                pyautogui.hotkey("alt", "tab")
             return {"status": "success", "action": "switch_window"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -188,7 +197,11 @@ class KeyboardController:
     @staticmethod
     def minimize_window() -> dict:
         try:
-            pyautogui.hotkey("win", "down")
+            sys_name = platform.system()
+            if sys_name == "Darwin":
+                pyautogui.hotkey("command", "m")
+            else:
+                pyautogui.hotkey("win", "down")
             return {"status": "success", "action": "minimize_window"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -196,7 +209,11 @@ class KeyboardController:
     @staticmethod
     def maximize_window() -> dict:
         try:
-            pyautogui.hotkey("win", "up")
+            sys_name = platform.system()
+            if sys_name == "Darwin":
+                pyautogui.hotkey("command", "ctrl", "f")
+            else:
+                pyautogui.hotkey("win", "up")
             return {"status": "success", "action": "maximize_window"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -204,7 +221,11 @@ class KeyboardController:
     @staticmethod
     def show_desktop() -> dict:
         try:
-            pyautogui.hotkey("win", "d")
+            sys_name = platform.system()
+            if sys_name == "Darwin":
+                pyautogui.hotkey("command", "f3")
+            else:
+                pyautogui.hotkey("win", "d")
             return {"status": "success", "action": "show_desktop"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -212,7 +233,11 @@ class KeyboardController:
     @staticmethod
     def lock_screen() -> dict:
         try:
-            pyautogui.hotkey("win", "l")
+            sys_name = platform.system()
+            if sys_name == "Darwin":
+                pyautogui.hotkey("command", "ctrl", "q")
+            else:
+                pyautogui.hotkey("win", "l")
             return {"status": "success", "action": "lock_screen"}
         except Exception as e:
             return {"status": "error", "message": str(e)}

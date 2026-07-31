@@ -20,8 +20,8 @@ const LAUNCH_COMMANDS: Command[] = [
 ];
 
 const POWER_COMMANDS: Command[] = [
-  {label: 'Shutdown', action: 'lock_screen', icon: '⏻', color: Colors.red},
-  {label: 'Restart', action: 'show_desktop', icon: '↺', color: Colors.amber},
+  {label: 'Lock Screen', action: 'lock_screen', icon: '🔒', color: Colors.red},
+  {label: 'Show Desktop', action: 'show_desktop', icon: '🖥', color: Colors.amber},
 ];
 
 function CommandBtn({item, onPress}: {item: Command; onPress: () => void}) {
@@ -48,7 +48,7 @@ export default function RemoteDashboardScreen({navigation, route}: any) {
   const [status, setStatus] = useState('READY');
 
   const handleCommand = async (action: string, label: string) => {
-    if (action === 'shutdown' || action === 'restart') {
+    if (action === 'lock_screen') {
       Alert.alert(
         `CONFIRM ${label.toUpperCase()}`,
         `Send ${label} command to ${deviceName}?`,
@@ -132,7 +132,7 @@ export default function RemoteDashboardScreen({navigation, route}: any) {
           ))}
         </View>
 
-        <Text style={styles.hint}>{'// COMMANDS ROUTED VIA RAILWAY BACKEND'}</Text>
+        <Text style={styles.hint}>{'// COMMANDS ROUTED VIA RENDER BACKEND'}</Text>
       </ScrollView>
     </View>
   );

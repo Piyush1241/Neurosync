@@ -3,6 +3,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const http = require('http');
+const os = require('os');
 
 app.on('web-contents-created', (event, contents) => {
   contents.on('context-menu', (e, params) => {

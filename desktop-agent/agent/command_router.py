@@ -7,9 +7,18 @@ import time
 from automation.app_launcher import AppLauncher
 from automation.mouse_controller import MouseController
 from automation.keyboard_controller import KeyboardController
+from automation.file_transfer_engine import FileTransferEngine
 
 logger = logging.getLogger(__name__)
 _REGISTRY: dict[str, dict] = {
+
+    # ── Remote File Transfer & Management ──
+    "file_list_dir":     {"fn": lambda c: FileTransferEngine.list_dir(c.get("dir_path", "~"))},
+    "file_read_text":    {"fn": lambda c: FileTransferEngine.read_file_text(c["file_path"]), "required": ["file_path"]},
+    "file_save_text":    {"fn": lambda c: FileTransferEngine.save_file_text(c["file_path"], c["content"]), "required": ["file_path", "content"]},
+    "file_get_preview":  {"fn": lambda c: FileTransferEngine.get_file_preview(c["file_path"]), "required": ["file_path"]},
+    "file_read_chunk":   {"fn": lambda c: FileTransferEngine.read_file_chunk(c["file_path"], c["chunk_index"]), "required": ["file_path", "chunk_index"]},
+    "file_write_chunk":  {"fn": lambda c: FileTransferEngine.write_file_chunk(c["file_path"], c["chunk_index"], c["total_chunks"], c["chunk_b64"]), "required": ["file_path", "chunk_index", "total_chunks", "chunk_b64"]},
 
     # ── App launcher ──
     "wait": {"fn": lambda c: time.sleep(c.get("seconds", 1)) or {"status": "success", "waited": c.get("seconds", 1)}},

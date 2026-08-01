@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Alert, ScrollView, SafeAreaView,
 } from 'react-native';
 import { Colors, Fonts, Spacing, Radius } from '../theme';
-import { sendDeviceCommand } from '../services/api';
+import { sendCommand } from '../services/commandService';
 
 interface Props {
   visible: boolean;
@@ -26,7 +26,7 @@ export default function FilePreviewModal({ visible, filePath, deviceId, onClose 
   const loadPreview = async () => {
     setLoading(true);
     try {
-      const res = await sendDeviceCommand(deviceId, 'file_get_preview', { file_path: filePath });
+      const res = await sendCommand(deviceId, 'file_get_preview', { file_path: filePath });
       if (res && res.status === 'success') {
         setPreviewData(res);
       } else {

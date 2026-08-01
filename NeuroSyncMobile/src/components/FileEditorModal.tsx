@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Alert, ScrollView, SafeAreaView,
 } from 'react-native';
 import { Colors, Fonts, Spacing, Radius } from '../theme';
-import { sendDeviceCommand } from '../services/api';
+import { sendCommand } from '../services/commandService';
 
 interface Props {
   visible: boolean;
@@ -28,7 +28,7 @@ export default function FileEditorModal({ visible, filePath, deviceId, onClose, 
   const loadFile = async () => {
     setLoading(true);
     try {
-      const res = await sendDeviceCommand(deviceId, 'file_read_text', { file_path: filePath });
+      const res = await sendCommand(deviceId, 'file_read_text', { file_path: filePath });
       if (res && res.status === 'success') {
         setContent(res.content || '');
       } else {
@@ -46,7 +46,7 @@ export default function FileEditorModal({ visible, filePath, deviceId, onClose, 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await sendDeviceCommand(deviceId, 'file_save_text', {
+      const res = await sendCommand(deviceId, 'file_save_text', {
         file_path: filePath,
         content: content,
       });

@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Alert, SafeAreaView, Modal, ProgressViewIOS, Platform
 } from 'react-native';
 import { Colors, Fonts, Spacing, Radius } from '../theme';
-import { sendDeviceCommand } from '../services/api';
+import { sendCommand } from '../services/commandService';
 import FileEditorModal from '../components/FileEditorModal';
 import FilePreviewModal from '../components/FilePreviewModal';
 
@@ -45,7 +45,7 @@ export default function FileExplorerScreen({ route, navigation }: any) {
   const loadDirectory = async (dirPath: string) => {
     setLoading(true);
     try {
-      const res = await sendDeviceCommand(deviceId, 'file_list_dir', { dir_path: dirPath });
+      const res = await sendCommand(deviceId, 'file_list_dir', { dir_path: dirPath });
       if (res && res.status === 'success') {
         setCurrentPath(res.current_path);
         setParentPath(res.parent_path);
@@ -77,7 +77,7 @@ export default function FileExplorerScreen({ route, navigation }: any) {
 
     try {
       // Step 1: Read Chunk 0 to get metadata
-      const res0 = await sendDeviceCommand(deviceId, 'file_read_chunk', {
+      const res0 = await sendCommand(deviceId, 'file_read_chunk', {
         file_path: item.path,
         chunk_index: 0,
       });
@@ -92,7 +92,7 @@ export default function FileExplorerScreen({ route, navigation }: any) {
 
       for (let i = 1; i < totalChunks; i++) {
         setTransferStatusText(`Downloading chunk ${i + 1}/${totalChunks}...`);
-        const chunkRes = await sendDeviceCommand(deviceId, 'file_read_chunk', {
+        const chunkRes = await sendCommand(deviceId, 'file_read_chunk', {
           file_path: item.path,
           chunk_index: i,
         });

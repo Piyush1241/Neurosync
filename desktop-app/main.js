@@ -141,7 +141,26 @@ function createDashboardWindow() {
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
-function startAgent(token) {
+function ensureDependenciesAndStartAgent(token) {
+  if (mainWindow) mainWindow.webContents.send('agent-log', 'Checking Python dependencies (psutil, websockets, pyautogui)...');
+  
+  const installProc = spawn(pythonExe, ['-m', 'pip', 'install', 'psutil', 'websockets', 'pyautogui', 'pyperclip', 'requests']);
+  
+  installProc.stdout.on('data', (d) => {
+    if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] ${d.toString().trim()}`);
+  });
+  installProc.stderr.on('data', (d) => {
+    if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] ${d.toString().trim()}`);
+  });
+
+  installProc.on('close', () => {
+    if (mainWindow) mainWindow.webContents.send('agent-log', 'Dependencies ready. Starting NeuroSync Agent...');
+    startAgentProcess(token);
+    startStats();
+  });
+}
+
+function startAgentProcess(token) {
   const agentScript = app.isPackaged
   ? path.join(process.resourcesPath, 'desktop-agent', 'agent', 'main.py')
   : path.join(__dirname, '..', 'desktop-agent', 'agent', 'main.py');
@@ -162,8 +181,12 @@ function startAgent(token) {
   });
   agentProcess.on('close', () => {
     if (mainWindow) mainWindow.webContents.send('agent-status', 'disconnected');
-    setTimeout(() => startAgent(authToken), 5000);
+    setTimeout(() => startAgentProcess(authToken), 5000);
   });
+}
+
+function startAgent(token) {
+  ensureDependenciesAndStartAgent(token);
 }
 
 function startStats() {
@@ -210,7 +233,6 @@ async function launchApp(email, token) {
   if (mainWindow) mainWindow.close();
   createDashboardWindow();
   startAgent(token);
-  startStats();
 }
 
 app.whenReady().then(async () => {
@@ -219,7 +241,6 @@ app.whenReady().then(async () => {
     authToken = saved.token;
     createDashboardWindow();
     startAgent(saved.token);
-    startStats();
   } else {
     createLoginWindow();
   }

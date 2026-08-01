@@ -1,4 +1,6 @@
 
+import { Platform } from 'react-native';
+
 export const Colors = {
   // Base Surfaces
   bg:           '#09090B',
@@ -52,10 +54,12 @@ export const Colors = {
 };
 
 export const Fonts = {
-  mono:    'SpaceMono-Regular',
-  display: 'Rajdhani-Bold',
-  ui:      'Rajdhani-SemiBold',
-  body:    'Rajdhani-Regular',
+  mono:    Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  display: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+  ui:      Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+  uiReg:   Platform.OS === 'ios' ? 'System' : 'sans-serif',
+  hud:     Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  body:    Platform.OS === 'ios' ? 'System' : 'sans-serif',
 };
 
 export const Spacing = {

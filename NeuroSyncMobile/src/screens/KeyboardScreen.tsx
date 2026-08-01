@@ -14,22 +14,22 @@ import { Colors, Fonts, Spacing, Radius } from '../theme';
 import { CornerBrackets, ScanlineOverlay, HudTopBar, HudDivider } from '../components/HudComponents';
 
 const SPECIAL_KEYS = [
-  { label: '⌫', value: 'backspace', colorKey: 'red' },
+  { label: '⌫', value: 'backspace', color: Colors.red },
   { label: 'TAB', value: 'tab' },
-  { label: 'ENTER', value: 'enter', colorKey: 'pink' },
-  { label: 'ESC', value: 'esc', colorKey: 'red' },
+  { label: 'ENTER', value: 'enter', color: Colors.cyan },
+  { label: 'ESC', value: 'esc', color: Colors.red },
   { label: '▲', value: 'up' },
   { label: '▼', value: 'down' },
   { label: '◀', value: 'left' },
   { label: '▶', value: 'right' },
-  { label: 'WIN', value: 'win', colorKey: 'purple' },
-  { label: 'DEL', value: 'delete', colorKey: 'red' },
+  { label: 'WIN', value: 'win', color: Colors.blue },
+  { label: 'DEL', value: 'delete', color: Colors.red },
   { label: 'SPACE', value: 'space' },
-  { label: 'CTRL+C', value: 'ctrl+c', colorKey: 'orange' },
-  { label: 'CTRL+V', value: 'ctrl+v', colorKey: 'orange' },
-  { label: 'CTRL+Z', value: 'ctrl+z', colorKey: 'orange' },
-  { label: 'ALT+F4', value: 'alt+f4', colorKey: 'red' },
-  { label: 'CTRL+A', value: 'ctrl+a', colorKey: 'orange' },
+  { label: 'CTRL+C', value: 'ctrl+c', color: Colors.amber },
+  { label: 'CTRL+V', value: 'ctrl+v', color: Colors.amber },
+  { label: 'CTRL+Z', value: 'ctrl+z', color: Colors.amber },
+  { label: 'ALT+F4', value: 'alt+f4', color: Colors.red },
+  { label: 'CTRL+A', value: 'ctrl+a', color: Colors.amber },
 ];
 
 export default function KeyboardScreen({ navigation, route }: any) {
@@ -113,8 +113,8 @@ export default function KeyboardScreen({ navigation, route }: any) {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.keyGrid}>
           {SPECIAL_KEYS.map(key => {
-            const color = key.colorKey ? (Colors as any)[key.colorKey] : Colors.textPrimary;
-            const borderColor = key.colorKey ? `${color}44` : Colors.border;
+            const color = key.color ?? Colors.textPrimary;
+            const borderColor = key.color ? `${key.color}44` : Colors.cyanBorder;
             return (
               <TouchableOpacity
                 key={key.value}

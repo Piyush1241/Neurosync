@@ -173,37 +173,37 @@ export default function AIAssistantScreen({ navigation, route }: any) {
 }
 
 const msg = StyleSheet.create({
-  bubble:     { maxWidth: '85%', borderRadius: Radius.lg, padding: Spacing.md, borderWidth: 1, marginBottom: 12, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
-  aiBubble:   { backgroundColor: Colors.bgCard, borderColor: Colors.pinkBorder, alignSelf: 'flex-start' },
-  userBubble: { backgroundColor: Colors.bgElevated, borderColor: `${Colors.pink}55`, alignSelf: 'flex-end' },
-  aiBar:      { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: Colors.pink },
-  role:       { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.ui, fontWeight: '600', letterSpacing: 2, marginBottom: 6 },
-  text:       { color: Colors.textPrimary, fontSize: 14, fontFamily: Fonts.body, lineHeight: 22 },
-  userText:   { color: Colors.textPrimary, fontWeight: '500' },
-  time:       { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.mono, marginTop: 6, textAlign: 'right' },
+  bubble:     { maxWidth: '85%', borderRadius: Radius.md, padding: Spacing.md, borderWidth: 1, marginBottom: 10, overflow: 'hidden' },
+  aiBubble:   { backgroundColor: Colors.bgCard, borderColor: Colors.violetBorder, alignSelf: 'flex-start' },
+  userBubble: { backgroundColor: Colors.violetFaint, borderColor: `${Colors.violet}55`, alignSelf: 'flex-end' },
+  aiBar:      { position: 'absolute', left: 0, top: 0, bottom: 0, width: 2, backgroundColor: Colors.violet },
+  role:       { color: Colors.textMuted, fontSize: 8, fontFamily: Fonts.ui, letterSpacing: 2, marginBottom: 5 },
+  text:       { color: Colors.textSecondary, fontSize: 14, fontFamily: Fonts.body, lineHeight: 20 },
+  userText:   { color: Colors.textPrimary },
+  time:       { color: Colors.textMuted, fontSize: 8, fontFamily: Fonts.mono, marginTop: 6, textAlign: 'right' },
 });
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
 
-  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: 56, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.border, backgroundColor: Colors.bgSecondary },
-  back:         { color: Colors.pink, fontSize: 13, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 0.5 },
+  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: 56, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.divider },
+  back:         { color: Colors.violetDim, fontSize: 13, fontFamily: Fonts.body },
   headerCenter: { alignItems: 'center' },
-  headerTitle:  { color: Colors.pink, fontSize: 14, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 3 },
-  headerSub:    { color: Colors.textSecondary, fontSize: 10, fontFamily: Fonts.mono, marginTop: 2 },
-  liveDot:      { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.pink, shadowColor: Colors.pink, shadowOpacity: 0.8, shadowRadius: 6 },
+  headerTitle:  { color: Colors.textPrimary, fontSize: 13, fontFamily: Fonts.display, letterSpacing: 3 },
+  headerSub:    { color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.mono, marginTop: 2 },
+  liveDot:      { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.online },
 
   list:     { padding: Spacing.lg, paddingTop: Spacing.md },
-  thinking: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: Spacing.lg, paddingBottom: 10 },
-  thinkingText: { color: Colors.textSecondary, fontSize: 11, fontFamily: Fonts.mono, letterSpacing: 1, fontWeight: '600' },
+  thinking: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: Spacing.lg, paddingBottom: 8 },
+  thinkingText: { color: Colors.textMuted, fontSize: 11, fontFamily: Fonts.mono, letterSpacing: 1 },
 
-  chips: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: Spacing.lg, gap: 8, paddingBottom: 12 },
-  chip:  { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.pill, paddingHorizontal: 14, paddingVertical: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 6 },
-  chipText: { color: Colors.textSecondary, fontSize: 12, fontFamily: Fonts.body, fontWeight: '500' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: Spacing.lg, gap: 8, paddingBottom: 8 },
+  chip:  { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.violetBorder, borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 7 },
+  chipText: { color: Colors.textSecondary, fontSize: 11, fontFamily: Fonts.body },
 
-  inputRow: { flexDirection: 'row', alignItems: 'flex-end', padding: Spacing.md, gap: 10, borderTopWidth: 1, borderTopColor: Colors.border, backgroundColor: Colors.bgSecondary },
-  input:    { flex: 1, backgroundColor: Colors.bgInput, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.lg, paddingHorizontal: 16, paddingVertical: 12, color: Colors.textPrimary, fontSize: 14, fontFamily: Fonts.body, maxHeight: 100 },
-  sendBtn:  { width: 48, height: 48, borderRadius: Radius.lg, backgroundColor: Colors.pink, justifyContent: 'center', alignItems: 'center', shadowColor: Colors.pink, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10 },
-  sendOff:  { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.border, shadowOpacity: 0 },
-  sendText: { color: '#FFFFFF', fontSize: 20, fontWeight: '700' },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', padding: Spacing.md, gap: 8, borderTopWidth: 1, borderTopColor: Colors.divider },
+  input:    { flex: 1, backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.violetBorder, borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 12, color: Colors.textPrimary, fontSize: 14, fontFamily: Fonts.body, maxHeight: 100 },
+  sendBtn:  { width: 46, height: 46, borderRadius: Radius.md, backgroundColor: Colors.violet, justifyContent: 'center', alignItems: 'center' },
+  sendOff:  { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.violetBorder },
+  sendText: { color: Colors.bg, fontSize: 20, fontFamily: Fonts.display },
 });

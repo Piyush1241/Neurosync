@@ -77,25 +77,25 @@ interface TopBarProps {
   pulse?: boolean;
 }
 
-export function HudTopBar({ title, onBack, rightLabel, rightColor = Colors.pink, pulse }: TopBarProps) {
+export function HudTopBar({ title, onBack, rightLabel, rightColor = Colors.cyan, pulse }: TopBarProps) {
   return (
     <View style={topStyles.bar}>
-      <View style={topStyles.leftContainer}>
-        {onBack ? (
-          <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Text style={topStyles.back}>‹ BACK</Text>
-          </TouchableOpacity>
-        ) : (
+      {onBack ? (
+        <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Text style={topStyles.back}>← BACK</Text>
+        </TouchableOpacity>
+      ) : (
+        <View style={topStyles.logoWrap}>
           <Text style={topStyles.logo}>NEUROSYNC</Text>
-        )}
-      </View>
+        </View>
+      )}
 
-      <Text style={topStyles.title} numberOfLines={1}>{title}</Text>
+      <Text style={topStyles.title}>{title}</Text>
 
-      <View style={topStyles.rightContainer}>
-        {pulse && <View style={[topStyles.dot, { backgroundColor: rightColor }]} />}
+      <View style={topStyles.right}>
+        {pulse && <View style={topStyles.dot} />}
         {rightLabel && (
-          <Text style={[topStyles.rightLabel, { color: rightColor }]} numberOfLines={1}>{rightLabel}</Text>
+          <Text style={[topStyles.rightLabel, { color: rightColor }]}>{rightLabel}</Text>
         )}
       </View>
     </View>
@@ -104,63 +104,49 @@ export function HudTopBar({ title, onBack, rightLabel, rightColor = Colors.pink,
 
 const topStyles = StyleSheet.create({
   bar: {
-    height: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.sm,
+    paddingBottom: Spacing.sm,
     marginBottom: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    backgroundColor: Colors.bgSecondary,
-    borderRadius: Radius.md,
-  },
-  leftContainer: {
-    width: 80,
-    justifyContent: 'center',
-  },
-  rightContainer: {
-    width: 110,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 6,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.divider,
   },
   back: {
-    color: Colors.pink,
-    fontSize: 12,
-    letterSpacing: 1.5,
-    fontFamily: Fonts.ui,
-    fontWeight: '700',
+    color: Colors.cyanDim,
+    fontSize: 11,
+    letterSpacing: 1,
+    fontFamily: Fonts.uiReg,
   },
+  logoWrap: {},
   logo: {
-    color: Colors.pink,
+    color: Colors.cyan,
     fontSize: 13,
-    letterSpacing: 3,
+    letterSpacing: 4,
     fontFamily: Fonts.ui,
-    fontWeight: '700',
   },
   title: {
-    flex: 1,
-    color: Colors.textPrimary,
-    fontSize: 12,
-    letterSpacing: 2,
+    color: Colors.cyan,
+    fontSize: 11,
+    letterSpacing: 3,
     fontFamily: Fonts.ui,
-    fontWeight: '700',
+    position: 'absolute',
+    left: 0,
+    right: 0,
     textAlign: 'center',
   },
+  right: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.cyan,
+    opacity: 0.9,
   },
   rightLabel: {
-    fontSize: 10,
-    letterSpacing: 1,
-    fontFamily: Fonts.mono,
-    fontWeight: '600',
+    fontSize: 9,
+    letterSpacing: 1.5,
+    fontFamily: Fonts.uiReg,
   },
 });
 
@@ -304,13 +290,13 @@ interface HudButtonProps {
   style?: ViewStyle;
 }
 
-export function HudButton({ icon, label, color = Colors.pink, onPress, style }: HudButtonProps) {
+export function HudButton({ icon, label, color = Colors.cyan, onPress, style }: HudButtonProps) {
   return (
-    <TouchableOpacity style={[hudBtnStyles.btn, { borderColor: `${color}35` }, style]} onPress={onPress} activeOpacity={0.75}>
-      <View style={[hudBtnStyles.accent, { backgroundColor: color, shadowColor: color }]} />
+    <TouchableOpacity style={[hudBtnStyles.btn, { borderColor: `${color}44` }, style]} onPress={onPress} activeOpacity={0.7}>
+      <View style={[hudBtnStyles.accent, { backgroundColor: color }]} />
       <Text style={[hudBtnStyles.icon, { color }]}>{icon}</Text>
       <Text style={[hudBtnStyles.label, { color: Colors.textPrimary }]}>{label}</Text>
-      <Text style={[hudBtnStyles.arrow, { color: `${color}88` }]}>›</Text>
+      <Text style={[hudBtnStyles.arrow, { color: `${color}66` }]}>›</Text>
     </TouchableOpacity>
   );
 }
@@ -319,33 +305,24 @@ const hudBtnStyles = StyleSheet.create({
   btn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     backgroundColor: Colors.bgCard,
-    borderWidth: 1,
-    borderRadius: Radius.lg,
-    paddingVertical: 14,
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm,
+    borderWidth: 0.5,
+    borderRadius: Radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: Spacing.md,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 6,
   },
   accent: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    width: 3,
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 6,
+    width: 2,
   },
-  icon: { fontSize: 18, width: 24, textAlign: 'center' },
-  label: { flex: 1, fontSize: 13, letterSpacing: 1.5, fontFamily: Fonts.ui, fontWeight: '600' },
-  arrow: { fontSize: 18, fontFamily: Fonts.ui, fontWeight: '700' },
+  icon: { fontSize: 16, width: 20, textAlign: 'center' },
+  label: { flex: 1, fontSize: 12, letterSpacing: 1.5, fontFamily: Fonts.ui },
+  arrow: { fontSize: 16, fontFamily: Fonts.uiReg },
 });
 
 // ── Divider ─────────────────────────────────────────────────
@@ -355,9 +332,9 @@ export function HudDivider({ style }: { style?: ViewStyle }) {
 
 const divStyles = StyleSheet.create({
   divider: {
-    height: 1,
+    height: 0.5,
     backgroundColor: Colors.divider,
-    marginVertical: Spacing.md,
+    marginVertical: Spacing.sm,
   },
 });
 
@@ -370,7 +347,7 @@ interface StatCardProps {
   barValue?: number;
 }
 
-export function StatCard({ label, value, detail, color = Colors.pink, barValue }: StatCardProps) {
+export function StatCard({ label, value, detail, color = Colors.cyan, barValue }: StatCardProps) {
   return (
     <View style={cardStyles.card}>
       <View style={cardStyles.header}>
@@ -390,20 +367,16 @@ export function StatCard({ label, value, detail, color = Colors.pink, barValue }
 const cardStyles = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    borderWidth: 0.5,
+    borderColor: Colors.cyanBorder,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 },
-  label: { color: Colors.textSecondary, fontSize: 10, letterSpacing: 2, fontFamily: Fonts.ui, fontWeight: '600' },
-  value: { fontSize: 24, fontFamily: Fonts.mono, fontWeight: '700' },
-  track: { height: 4, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden', marginBottom: 6 },
-  detail: { color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.mono },
+  label: { color: Colors.textSecondary, fontSize: 10, letterSpacing: 2, fontFamily: Fonts.uiReg },
+  value: { fontSize: 22, fontFamily: Fonts.hud, fontWeight: '600' },
+  track: { height: 3, backgroundColor: 'rgba(0,255,255,0.1)', borderRadius: 2, overflow: 'hidden', marginBottom: 6 },
+  fill: { height: 3, borderRadius: 2 },
+  detail: { color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.uiReg, letterSpacing: 0.5 },
 });

@@ -569,6 +569,3 @@ export default function FileManagerScreen({route, navigation}: any) {
     </View>
   );
 }
-  inputConfirm: {flex: 1, paddingVertical: 12, alignItems: 'center', backgroundColor: '#00e5ff11', borderWidth: 1, borderColor: '#00e5ff', borderRadius: 4},
-  inputConfirmText: {color: '#00e5ff', fontSize: 11, letterSpacing: 2, fontWeight: '700'},
-});

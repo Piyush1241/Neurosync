@@ -163,17 +163,6 @@ const topStyles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.cyan,
-    opacity: 0.9,
-  },
-  rightLabel: {
-    fontSize: 9,
-    letterSpacing: 1.5,
-    fontFamily: Fonts.uiReg,
-  },
-});
 
 // ── Arc ring (animated SVG ring for CPU / single metric) ────
 interface ArcRingProps {

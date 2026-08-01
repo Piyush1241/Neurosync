@@ -22,7 +22,15 @@ class KeyboardController:
         if not isinstance(text, str):
             return {"status": "error", "message": "text must be a string"}
         try:
-            pyautogui.write(text, interval=interval)
+            sys_name = platform.system()
+            original = pyperclip.paste()
+            pyperclip.copy(text)
+            if sys_name == "Darwin":
+                pyautogui.hotkey("command", "v")
+            else:
+                pyautogui.hotkey("ctrl", "v")
+            time.sleep(0.05)
+            pyperclip.copy(original)
             return {"status": "success", "typed": text, "length": len(text)}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -34,10 +42,14 @@ class KeyboardController:
         More reliable than write() for non-ASCII content.
         """
         try:
+            sys_name = platform.system()
             original = pyperclip.paste()      # save clipboard
             pyperclip.copy(text)
-            pyautogui.hotkey("ctrl", "v")
-            time.sleep(0.1)
+            if sys_name == "Darwin":
+                pyautogui.hotkey("command", "v")
+            else:
+                pyautogui.hotkey("ctrl", "v")
+            time.sleep(0.05)
             pyperclip.copy(original)           # restore clipboard
             return {"status": "success", "typed": text}
         except Exception as e:

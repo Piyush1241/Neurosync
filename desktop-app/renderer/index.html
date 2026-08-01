@@ -195,10 +195,10 @@
     border-radius: 99px;
     transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .gauge-fill.cpu { background: linear-gradient(90deg, var(--pink), var(--purple)); box-shadow: 0 0 10px var(--pink-glow); }
-  .gauge-fill.ram { background: linear-gradient(90deg, var(--purple), var(--purple-dark)); box-shadow: 0 0 10px rgba(188,14,239,0.3); }
-  .gauge-fill.disk { background: linear-gradient(90deg, var(--orange), var(--red)); box-shadow: 0 0 10px rgba(252,94,49,0.3); }
-  .gauge-fill.net { background: linear-gradient(90deg, var(--pink), var(--orange)); box-shadow: 0 0 10px var(--pink-glow); }
+  .gauge-fill.cpu { background: linear-gradient(90deg, #00e5ff, #00b0ff); box-shadow: 0 0 10px rgba(0,229,255,0.4); }
+  .gauge-fill.ram { background: linear-gradient(90deg, #b39ddb, #7c4dff); box-shadow: 0 0 10px rgba(179,157,219,0.4); }
+  .gauge-fill.disk { background: linear-gradient(90deg, #ffb300, #ff8f00); box-shadow: 0 0 10px rgba(255,179,0,0.4); }
+  .gauge-fill.net { background: linear-gradient(90deg, #00ff88, #00e676); box-shadow: 0 0 10px rgba(0,255,136,0.4); }
 
   /* Device info */
   .info-grid {
@@ -240,7 +240,7 @@
   }
   .big-stat:hover {
     transform: translateY(-2px);
-    box-shadow: 0 20px 45px rgba(0,0,0,0.6), 0 0 20px var(--pink-glow);
+    box-shadow: 0 20px 45px rgba(0,0,0,0.6), 0 0 20px rgba(0,229,255,0.25);
   }
   .big-stat::before {
     content: '';
@@ -248,10 +248,10 @@
     left: 0; top: 0; bottom: 0;
     width: 3px;
   }
-  .big-stat.cpu::before { background: var(--pink); box-shadow: 0 0 10px var(--pink); }
-  .big-stat.ram::before { background: var(--purple); box-shadow: 0 0 10px var(--purple); }
-  .big-stat.disk::before { background: var(--orange); box-shadow: 0 0 10px var(--orange); }
-  .big-stat.net::before { background: var(--pink); box-shadow: 0 0 10px var(--pink); }
+  .big-stat.cpu::before { background: #00e5ff; box-shadow: 0 0 10px #00e5ff; }
+  .big-stat.ram::before { background: #b39ddb; box-shadow: 0 0 10px #b39ddb; }
+  .big-stat.disk::before { background: #ffb300; box-shadow: 0 0 10px #ffb300; }
+  .big-stat.net::before { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
   .big-stat-label { font-family: var(--font-ui); font-size: 9px; color: var(--text-dim); letter-spacing: 3px; font-weight: 600; }
   .big-stat-val {
     font-family: var(--font-mono);
@@ -260,10 +260,10 @@
     line-height: 1;
     margin: 8px 0 4px;
   }
-  .big-stat.cpu .big-stat-val { color: var(--pink); text-shadow: 0 0 12px var(--pink-glow); }
-  .big-stat.ram .big-stat-val { color: #d896ff; text-shadow: 0 0 12px rgba(188,14,239,0.4); }
-  .big-stat.disk .big-stat-val { color: var(--orange); text-shadow: 0 0 12px rgba(252,94,49,0.4); }
-  .big-stat.net .big-stat-val { color: var(--pink); text-shadow: 0 0 12px var(--pink-glow); }
+  .big-stat.cpu .big-stat-val { color: #00e5ff; text-shadow: 0 0 12px rgba(0,229,255,0.4); }
+  .big-stat.ram .big-stat-val { color: #b39ddb; text-shadow: 0 0 12px rgba(179,157,219,0.4); }
+  .big-stat.disk .big-stat-val { color: #ffb300; text-shadow: 0 0 12px rgba(255,179,0,0.4); }
+  .big-stat.net .big-stat-val { color: #00ff88; text-shadow: 0 0 12px rgba(0,255,136,0.4); }
   .big-stat-sub { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); }
 
   /* Sparkline canvas */

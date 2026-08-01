@@ -132,7 +132,12 @@
       </div>
       <div class="field">
         <label>PASSWORD</label>
-        <input type="password" id="password" placeholder="••••••••"/>
+        <div style="position: relative; display: flex; align-items: center;">
+          <input type="password" id="password" placeholder="••••••••" style="padding-right: 42px;"/>
+          <button type="button" id="toggle-pw-btn" onclick="togglePasswordVisibility()" title="Toggle Password Visibility" style="position: absolute; right: 10px; background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-size: 15px; padding: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s;">
+            👁
+          </button>
+        </div>
       </div>
       <div id="error-msg"></div>
       <button id="login-btn" onclick="handleLogin()">AUTHENTICATE →</button>
@@ -142,6 +147,20 @@
 </div>
 
 <script>
+  function togglePasswordVisibility() {
+    const pwInput = document.getElementById('password');
+    const toggleBtn = document.getElementById('toggle-pw-btn');
+    if (pwInput.type === 'password') {
+      pwInput.type = 'text';
+      toggleBtn.textContent = '🙈';
+      toggleBtn.style.color = 'var(--pink)';
+    } else {
+      pwInput.type = 'password';
+      toggleBtn.textContent = '👁';
+      toggleBtn.style.color = 'var(--text-dim)';
+    }
+  }
+
   async function handleLogin() {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;

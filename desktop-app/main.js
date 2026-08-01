@@ -86,13 +86,13 @@ function clearCredentials() {
   try { fs.unlinkSync(CREDENTIALS_FILE); } catch {}
 }
 
-function loginToBackend(email, password) {
+function makeLoginReq(hostname, port, secure, email, password) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({ email, password });
-    const transport = BACKEND_SECURE ? https : http;
+    const transport = secure ? https : http;
     const req = transport.request({
-      hostname: BACKEND_HOST,
-      port: BACKEND_PORT,
+      hostname,
+      port,
       path: '/api/v1/login',
       method: 'POST',
       headers: {
@@ -114,6 +114,19 @@ function loginToBackend(email, password) {
     req.write(body);
     req.end();
   });
+}
+
+async function loginToBackend(email, password) {
+  try {
+    return await makeLoginReq(BACKEND_HOST, BACKEND_PORT, BACKEND_SECURE, email, password);
+  } catch (err) {
+    if (BACKEND_HOST !== '127.0.0.1' && BACKEND_HOST !== 'localhost') {
+      try {
+        return await makeLoginReq('127.0.0.1', 8000, false, email, password);
+      } catch {}
+    }
+    throw err;
+  }
 }
 
 function createLoginWindow() {

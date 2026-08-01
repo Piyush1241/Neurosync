@@ -1,4 +1,3 @@
-// src/screens/AIAssistantScreen.tsx — Cyberpunk Neomorphism theme
 
 import React, { useState, useRef } from 'react';
 import {
@@ -7,7 +6,6 @@ import {
 } from 'react-native';
 import { api } from '../services/apiClient';
 import { Colors, Fonts, Spacing, Radius } from '../theme';
-import { ScanlineOverlay, CornerBrackets } from '../components/HudComponents';
 
 interface Message {
   id: string;
@@ -56,6 +54,7 @@ export default function AIAssistantScreen({ navigation, route }: any) {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
 
     try {
+      // ✅ Correct endpoint
       const res = await api.post('/api/v1/ai/execute', {
         device_id: deviceId,
         prompt,
@@ -92,7 +91,7 @@ export default function AIAssistantScreen({ navigation, route }: any) {
     return (
       <View style={[msg.bubble, isUser ? msg.userBubble : msg.aiBubble]}>
         {!isUser && <View style={msg.aiBar} />}
-        <Text style={msg.role}>{isUser ? 'OPERATOR' : 'NEUROSYNC AI'}</Text>
+        <Text style={msg.role}>{isUser ? 'YOU' : 'NEUROSYNC AI'}</Text>
         <Text style={[msg.text, isUser && msg.userText]}>{item.text}</Text>
         <Text style={msg.time}>{item.time}</Text>
       </View>
@@ -105,13 +104,11 @@ export default function AIAssistantScreen({ navigation, route }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
-      <ScanlineOverlay />
-      <CornerBrackets color={Colors.pinkDim} />
 
       {/* Header */}
       <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={s.back}>← BACK</Text>
+          <Text style={s.back}>← Back</Text>
         </TouchableOpacity>
         <View style={s.headerCenter}>
           <Text style={s.headerTitle}>AI ASSISTANT</Text>
@@ -133,8 +130,8 @@ export default function AIAssistantScreen({ navigation, route }: any) {
 
       {loading && (
         <View style={s.thinking}>
-          <ActivityIndicator size="small" color={Colors.pink} />
-          <Text style={s.thinkingText}>SYNTHESIZING ACTIONS...</Text>
+          <ActivityIndicator size="small" color={Colors.violet} />
+          <Text style={s.thinkingText}>Thinking...</Text>
         </View>
       )}
 
@@ -153,7 +150,7 @@ export default function AIAssistantScreen({ navigation, route }: any) {
       <View style={s.inputRow}>
         <TextInput
           style={s.input}
-          placeholder={`Command ${deviceName}...`}
+          placeholder={`Tell ${deviceName} to...`}
           placeholderTextColor={Colors.textMuted}
           value={input}
           onChangeText={setInput}
@@ -176,37 +173,37 @@ export default function AIAssistantScreen({ navigation, route }: any) {
 }
 
 const msg = StyleSheet.create({
-  bubble:     { maxWidth: '85%', borderRadius: Radius.md, padding: Spacing.md, borderWidth: 1, marginBottom: 12, overflow: 'hidden' },
-  aiBubble:   { backgroundColor: Colors.bgCard, borderColor: Colors.border, alignSelf: 'flex-start' },
-  userBubble: { backgroundColor: Colors.bgElevated, borderColor: Colors.pinkBorder, alignSelf: 'flex-end' },
+  bubble:     { maxWidth: '85%', borderRadius: Radius.lg, padding: Spacing.md, borderWidth: 1, marginBottom: 12, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  aiBubble:   { backgroundColor: Colors.bgCard, borderColor: Colors.pinkBorder, alignSelf: 'flex-start' },
+  userBubble: { backgroundColor: Colors.bgElevated, borderColor: `${Colors.pink}55`, alignSelf: 'flex-end' },
   aiBar:      { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: Colors.pink },
-  role:       { color: Colors.textMuted, fontSize: 8, fontFamily: Fonts.ui, letterSpacing: 2, marginBottom: 4, fontWeight: '600' },
-  text:       { color: Colors.textSecondary, fontSize: 13, fontFamily: Fonts.mono, lineHeight: 18 },
+  role:       { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.ui, fontWeight: '600', letterSpacing: 2, marginBottom: 6 },
+  text:       { color: Colors.textPrimary, fontSize: 14, fontFamily: Fonts.body, lineHeight: 22 },
   userText:   { color: Colors.textPrimary, fontWeight: '500' },
-  time:       { color: Colors.textMuted, fontSize: 8, fontFamily: Fonts.mono, marginTop: 6, textAlign: 'right' },
+  time:       { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.mono, marginTop: 6, textAlign: 'right' },
 });
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
 
-  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: 56, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.divider },
-  back:         { color: Colors.pink, fontSize: 11, fontFamily: Fonts.ui, letterSpacing: 1, fontWeight: '600' },
+  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: 56, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.border, backgroundColor: Colors.bgSecondary },
+  back:         { color: Colors.pink, fontSize: 13, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 0.5 },
   headerCenter: { alignItems: 'center' },
-  headerTitle:  { color: Colors.textPrimary, fontSize: 14, fontFamily: Fonts.ui, letterSpacing: 3, fontWeight: '700' },
-  headerSub:    { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.mono, marginTop: 2 },
-  liveDot:      { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.pink, shadowColor: Colors.pink, shadowRadius: 6, shadowOpacity: 0.8 },
+  headerTitle:  { color: Colors.pink, fontSize: 14, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 3 },
+  headerSub:    { color: Colors.textSecondary, fontSize: 10, fontFamily: Fonts.mono, marginTop: 2 },
+  liveDot:      { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.pink, shadowColor: Colors.pink, shadowOpacity: 0.8, shadowRadius: 6 },
 
   list:     { padding: Spacing.lg, paddingTop: Spacing.md },
-  thinking: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: Spacing.lg, paddingBottom: 8 },
-  thinkingText: { color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.mono, letterSpacing: 1 },
+  thinking: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: Spacing.lg, paddingBottom: 10 },
+  thinkingText: { color: Colors.textSecondary, fontSize: 11, fontFamily: Fonts.mono, letterSpacing: 1, fontWeight: '600' },
 
-  chips: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: Spacing.lg, gap: 8, paddingBottom: 10 },
-  chip:  { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 8 },
-  chipText: { color: Colors.textSecondary, fontSize: 11, fontFamily: Fonts.ui },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: Spacing.lg, gap: 8, paddingBottom: 12 },
+  chip:  { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.pill, paddingHorizontal: 14, paddingVertical: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 6 },
+  chipText: { color: Colors.textSecondary, fontSize: 12, fontFamily: Fonts.body, fontWeight: '500' },
 
-  inputRow: { flexDirection: 'row', alignItems: 'flex-end', padding: Spacing.md, gap: 8, borderTopWidth: 1, borderTopColor: Colors.divider, backgroundColor: Colors.bgSecondary },
-  input:    { flex: 1, backgroundColor: Colors.bgInput, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 12, color: Colors.textPrimary, fontSize: 13, fontFamily: Fonts.mono, maxHeight: 100 },
-  sendBtn:  { width: 44, height: 44, borderRadius: Radius.md, backgroundColor: Colors.pink, justifyContent: 'center', alignItems: 'center', shadowColor: Colors.pink, shadowRadius: 8, shadowOpacity: 0.5 },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', padding: Spacing.md, gap: 10, borderTopWidth: 1, borderTopColor: Colors.border, backgroundColor: Colors.bgSecondary },
+  input:    { flex: 1, backgroundColor: Colors.bgInput, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.lg, paddingHorizontal: 16, paddingVertical: 12, color: Colors.textPrimary, fontSize: 14, fontFamily: Fonts.body, maxHeight: 100 },
+  sendBtn:  { width: 48, height: 48, borderRadius: Radius.lg, backgroundColor: Colors.pink, justifyContent: 'center', alignItems: 'center', shadowColor: Colors.pink, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10 },
   sendOff:  { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.border, shadowOpacity: 0 },
-  sendText: { color: '#FFFFFF', fontSize: 18, fontFamily: Fonts.ui, fontWeight: '700' },
+  sendText: { color: '#FFFFFF', fontSize: 20, fontWeight: '700' },
 });

@@ -27,14 +27,14 @@ function getFileIcon(item: FileItem): string {
 }
 
 function getIconColor(item: FileItem): string {
-  if (item.type === 'folder') return '#00e5ff';
+  if (item.type === 'folder') return Colors.pink;
   const colors: Record<string, string> = {
-    pdf: '#ff3d3d', txt: '#c8d8e8', xlsx: '#00ff88', xls: '#00ff88',
-    doc: '#4fc3f7', docx: '#4fc3f7', exe: '#ffb300', png: '#b39ddb',
-    jpg: '#b39ddb', jpeg: '#b39ddb', mp4: '#ff7043', mp3: '#7c4dff',
-    zip: '#ffb300', rar: '#ffb300',
+    pdf: Colors.red, txt: Colors.textPrimary, xlsx: Colors.green, xls: Colors.green,
+    doc: Colors.purple, docx: Colors.purple, exe: Colors.orange, png: Colors.pink,
+    jpg: Colors.pink, jpeg: Colors.pink, mp4: Colors.orange, mp3: Colors.purple,
+    zip: Colors.orange, rar: Colors.orange,
   };
-  return colors[item.extension?.toLowerCase()] || '#5a7a94';
+  return colors[item.extension?.toLowerCase()] || Colors.textMuted;
 }
 
 function EmptyDir() {
@@ -44,6 +44,120 @@ function EmptyDir() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {flex: 1, backgroundColor: Colors.bg},
+  listContent: {paddingBottom: 40},
+
+  header: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Colors.bgSecondary,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    paddingTop: 50, paddingBottom: 14, paddingHorizontal: 16,
+  },
+  backBtn: {paddingRight: 12},
+  backText: {color: Colors.pink, fontSize: 20, fontWeight: '700'},
+  headerCenter: {flex: 1, alignItems: 'center'},
+  headerTitle: {color: Colors.pink, fontSize: 14, fontWeight: '700', letterSpacing: 4},
+  headerSub: {color: Colors.textSecondary, fontSize: 10, letterSpacing: 2, marginTop: 2, fontFamily: Fonts.mono},
+  addBtn: {borderWidth: 1, borderColor: Colors.pinkBorder, paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.md, backgroundColor: Colors.bgElevated},
+  addText: {color: Colors.pink, fontSize: 11, letterSpacing: 2, fontWeight: '700'},
+
+  pathBar: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Colors.bgCard,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    paddingHorizontal: 16, paddingVertical: 12,
+  },
+  pathLabel: {color: Colors.textMuted, fontSize: 9, letterSpacing: 3, fontFamily: Fonts.mono},
+  pathText: {flex: 1, fontSize: 12, fontFamily: Fonts.mono, color: Colors.pink, fontWeight: '600'},
+
+  searchBar: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Colors.bgCard,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    paddingHorizontal: 16, paddingVertical: 10, gap: 10,
+  },
+  searchInput: {
+    flex: 1, backgroundColor: Colors.bgInput,
+    borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md,
+    paddingHorizontal: 14, paddingVertical: 9,
+    color: Colors.textPrimary, fontSize: 12, fontFamily: Fonts.mono, letterSpacing: 1,
+  },
+  searchBtn: {padding: 4},
+  searchBtnText: {color: Colors.pink, fontSize: 18},
+  sortBtn: {borderWidth: 1, borderColor: Colors.border, paddingHorizontal: 10, paddingVertical: 8, borderRadius: Radius.md, backgroundColor: Colors.bgElevated},
+  sortText: {color: Colors.textSecondary, fontSize: 10, letterSpacing: 1.5, fontWeight: '600'},
+
+  countBar: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderBottomWidth: 1, borderBottomColor: Colors.divider,
+  },
+  countText: {color: Colors.textMuted, fontSize: 9, letterSpacing: 2, fontFamily: Fonts.mono},
+
+  fileRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 14, paddingHorizontal: 16,
+    backgroundColor: Colors.bg,
+  },
+  iconBox: {
+    width: 42, height: 42, borderRadius: Radius.md,
+    borderWidth: 1, backgroundColor: Colors.bgElevated,
+    alignItems: 'center', justifyContent: 'center', marginRight: 14,
+  },
+  fileIcon: {fontSize: 18},
+  fileInfo: {flex: 1},
+  fileName: {color: Colors.textPrimary, fontSize: 14, fontWeight: '600'},
+  fileMeta: {color: Colors.textSecondary, fontSize: 10, marginTop: 4, fontFamily: Fonts.mono, letterSpacing: 1},
+  moreBtn: {padding: 8},
+  moreText: {color: Colors.textMuted, fontSize: 20},
+  separator: {height: 1, backgroundColor: Colors.divider, marginLeft: 72},
+
+  center: {flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80},
+  loadingText: {color: Colors.textSecondary, fontSize: 10, letterSpacing: 3, marginTop: 16, fontFamily: Fonts.mono},
+  errorIcon: {color: Colors.orange, fontSize: 36, marginBottom: 12},
+  errorText: {color: Colors.orange, fontSize: 11, letterSpacing: 2, fontFamily: Fonts.mono, textAlign: 'center', paddingHorizontal: 32, fontWeight: '600'},
+  retryBtn: {marginTop: 20, borderWidth: 1, borderColor: Colors.pinkBorder, paddingHorizontal: 28, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: Colors.bgElevated},
+  retryText: {color: Colors.pink, fontSize: 12, letterSpacing: 3, fontWeight: '700'},
+  emptyText: {color: Colors.textMuted, fontSize: 11, letterSpacing: 3, fontFamily: Fonts.mono},
+
+  // Menu modal
+  modalOverlay: {flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'flex-end'},
+  menuSheet: {
+    backgroundColor: Colors.bgCard,
+    borderTopWidth: 1, borderTopColor: Colors.pinkBorder,
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingBottom: 36, paddingHorizontal: 24, paddingTop: 14,
+  },
+  menuHandle: {width: 44, height: 4, backgroundColor: Colors.pinkBorder, borderRadius: 2, alignSelf: 'center', marginBottom: 18},
+  menuTitle: {color: Colors.textPrimary, fontSize: 16, fontWeight: '700', marginBottom: 4},
+  menuSub: {color: Colors.textSecondary, fontSize: 10, letterSpacing: 2, fontFamily: Fonts.mono, marginBottom: 18},
+  menuItem: {paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: Colors.divider},
+  menuItemText: {color: Colors.textPrimary, fontSize: 14, letterSpacing: 2, fontWeight: '600'},
+  menuItemDanger: {color: Colors.red},
+  menuCancel: {marginTop: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md, backgroundColor: Colors.bgElevated},
+  menuCancelText: {color: Colors.textSecondary, fontSize: 12, letterSpacing: 3, fontWeight: '600'},
+
+  // Input modal
+  inputOverlay: {flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 24},
+  inputSheet: {
+    width: '100%', backgroundColor: Colors.bgCard,
+    borderWidth: 1, borderColor: Colors.pinkBorder, borderRadius: Radius.lg, padding: 24,
+    shadowColor: Colors.pink, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 12,
+  },
+  inputTitle: {color: Colors.pink, fontSize: 13, letterSpacing: 4, fontWeight: '700', marginBottom: 18},
+  inputField: {
+    backgroundColor: Colors.bgInput, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: Radius.md, padding: 14, color: Colors.textPrimary,
+    fontSize: 14, fontFamily: Fonts.mono, marginBottom: 24,
+  },
+  inputBtns: {flexDirection: 'row', gap: 14},
+  inputCancel: {flex: 1, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md, backgroundColor: Colors.bgElevated},
+  inputCancelText: {color: Colors.textSecondary, fontSize: 12, letterSpacing: 2, fontWeight: '600'},
+  inputConfirm: {flex: 1, paddingVertical: 14, alignItems: 'center', backgroundColor: Colors.pink, borderRadius: Radius.md},
+  inputConfirmText: {color: '#FFFFFF', fontSize: 12, letterSpacing: 2, fontWeight: '700'},
+});
 
 export default function FileManagerScreen({route, navigation}: any) {
   const deviceId = route?.params?.deviceId;
@@ -455,118 +569,6 @@ export default function FileManagerScreen({route, navigation}: any) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
-  listContent: { paddingBottom: 40 },
-
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.bgSecondary,
-    borderBottomWidth: 1, borderBottomColor: Colors.divider,
-    paddingTop: 50, paddingBottom: 14, paddingHorizontal: 16,
-  },
-  backBtn: { paddingRight: 12 },
-  backText: { color: Colors.pink, fontSize: 20, fontWeight: '700' },
-  headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { color: Colors.textPrimary, fontSize: 13, fontWeight: '700', letterSpacing: 4, fontFamily: Fonts.ui },
-  headerSub: { color: Colors.textMuted, fontSize: 9, letterSpacing: 2, marginTop: 2, fontFamily: Fonts.mono },
-  addBtn: { borderWidth: 1, borderColor: Colors.pinkBorder, backgroundColor: Colors.pinkFaint, paddingHorizontal: 12, paddingVertical: 5, borderRadius: Radius.sm },
-  addText: { color: Colors.pink, fontSize: 10, letterSpacing: 2, fontFamily: Fonts.ui, fontWeight: '700' },
-
-  pathBar: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.bgCard,
-    borderBottomWidth: 1, borderBottomColor: Colors.divider,
-    paddingHorizontal: 16, paddingVertical: 10,
-  },
-  pathLabel: { color: Colors.textMuted, fontSize: 9, letterSpacing: 3, fontFamily: Fonts.mono, fontWeight: '600' },
-  pathText: { flex: 1, fontSize: 12, fontFamily: Fonts.mono, color: Colors.pink, fontWeight: '600' },
-
-  searchBar: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.bgCard,
-    borderBottomWidth: 1, borderBottomColor: Colors.divider,
-    paddingHorizontal: 16, paddingVertical: 8, gap: 8,
-  },
-  searchInput: {
-    flex: 1, backgroundColor: Colors.bgInput,
-    borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.sm,
-    paddingHorizontal: 12, paddingVertical: 7,
-    color: Colors.textPrimary, fontSize: 12, fontFamily: Fonts.mono, letterSpacing: 1,
-  },
-  searchBtn: { padding: 4 },
-  searchBtnText: { color: Colors.pink, fontSize: 18 },
-  sortBtn: { borderWidth: 1, borderColor: Colors.border, paddingHorizontal: 10, paddingVertical: 6, borderRadius: Radius.sm, backgroundColor: Colors.bgElevated },
-  sortText: { color: Colors.textSecondary, fontSize: 9, letterSpacing: 1, fontFamily: Fonts.ui },
-
-  countBar: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 8,
-    borderBottomWidth: 1, borderBottomColor: Colors.divider,
-    backgroundColor: Colors.bgSecondary,
-  },
-  countText: { color: Colors.textMuted, fontSize: 9, letterSpacing: 2, fontFamily: Fonts.mono },
-
-  fileRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 12, paddingHorizontal: 16,
-    backgroundColor: Colors.bg,
-  },
-  iconBox: {
-    width: 40, height: 40, borderRadius: Radius.md,
-    borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.bgElevated,
-    alignItems: 'center', justifyContent: 'center', marginRight: 12,
-  },
-  fileIcon: { fontSize: 16 },
-  fileInfo: { flex: 1 },
-  fileName: { color: Colors.textPrimary, fontSize: 13, fontWeight: '600', fontFamily: Fonts.ui },
-  fileMeta: { color: Colors.textMuted, fontSize: 10, marginTop: 3, fontFamily: Fonts.mono, letterSpacing: 0.5 },
-  moreBtn: { padding: 8 },
-  moreText: { color: Colors.textMuted, fontSize: 18 },
-  separator: { height: 1, backgroundColor: Colors.divider, marginLeft: 68 },
-
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
-  loadingText: { color: Colors.textMuted, fontSize: 10, letterSpacing: 3, marginTop: 16, fontFamily: Fonts.mono },
-  errorIcon: { color: Colors.orange, fontSize: 32, marginBottom: 12 },
-  errorText: { color: Colors.orange, fontSize: 10, letterSpacing: 2, fontFamily: Fonts.mono, textAlign: 'center', paddingHorizontal: 32 },
-  retryBtn: { marginTop: 20, borderWidth: 1, borderColor: Colors.pinkBorder, backgroundColor: Colors.pinkFaint, paddingHorizontal: 24, paddingVertical: 10, borderRadius: Radius.md },
-  retryText: { color: Colors.pink, fontSize: 11, letterSpacing: 3, fontFamily: Fonts.ui, fontWeight: '700' },
-  emptyText: { color: Colors.textMuted, fontSize: 11, letterSpacing: 3, fontFamily: Fonts.mono },
-
-  // Menu modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
-  menuSheet: {
-    backgroundColor: Colors.bgCard,
-    borderTopWidth: 1, borderTopColor: Colors.pinkBorder,
-    borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    paddingBottom: 34, paddingHorizontal: 20, paddingTop: 14,
-    shadowColor: Colors.pink, shadowRadius: 15, shadowOpacity: 0.2,
-  },
-  menuHandle: { width: 40, height: 4, backgroundColor: Colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
-  menuTitle: { color: Colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 4, fontFamily: Fonts.ui },
-  menuSub: { color: Colors.textMuted, fontSize: 9, letterSpacing: 2, fontFamily: Fonts.mono, marginBottom: 16 },
-  menuItem: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.divider },
-  menuItemText: { color: Colors.textPrimary, fontSize: 13, letterSpacing: 2, fontFamily: Fonts.ui },
-  menuItemDanger: { color: Colors.red },
-  menuCancel: { marginTop: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md, backgroundColor: Colors.bgElevated },
-  menuCancelText: { color: Colors.textMuted, fontSize: 11, letterSpacing: 3, fontFamily: Fonts.ui },
-
-  // Input modal
-  inputOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  inputSheet: {
-    width: '100%', backgroundColor: Colors.bgCard,
-    borderWidth: 1, borderColor: Colors.pinkBorder, borderRadius: 16, padding: 24,
-  },
-  inputTitle: { color: Colors.pink, fontSize: 12, letterSpacing: 4, fontWeight: '700', marginBottom: 16, fontFamily: Fonts.ui },
-  inputField: {
-    backgroundColor: Colors.bgInput, borderWidth: 1, borderColor: Colors.border,
-    borderRadius: Radius.md, padding: 12, color: Colors.textPrimary,
-    fontSize: 13, fontFamily: Fonts.mono, marginBottom: 20,
-  },
-  inputBtns: { flexDirection: 'row', gap: 12 },
-  inputCancel: { flex: 1, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md, backgroundColor: Colors.bgElevated },
-  inputCancelText: { color: Colors.textMuted, fontSize: 11, letterSpacing: 2, fontFamily: Fonts.ui },
-  inputConfirm: { flex: 1, paddingVertical: 12, alignItems: 'center', backgroundColor: Colors.pink, borderRadius: Radius.md },
-  inputConfirmText: { color: '#FFFFFF', fontSize: 11, letterSpacing: 2, fontWeight: '700', fontFamily: Fonts.ui },
+  inputConfirm: {flex: 1, paddingVertical: 12, alignItems: 'center', backgroundColor: '#00e5ff11', borderWidth: 1, borderColor: '#00e5ff', borderRadius: 4},
+  inputConfirmText: {color: '#00e5ff', fontSize: 11, letterSpacing: 2, fontWeight: '700'},
 });

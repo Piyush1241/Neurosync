@@ -104,12 +104,12 @@ export default function DeviceDetailsScreen({ navigation, route }: any) {
         {/* Controls */}
         <Text style={s.sectionLabel}>CONTROLS</Text>
         <View style={s.ctrlList}>
-          <ControlBtn icon="🤖" label="AI Assistant"    color={Colors.violet}  onPress={() => navigation.navigate('AIAssistant', { device })} />
-          <ControlBtn icon="📊" label="System Monitor"  color={Colors.online}  onPress={() => navigation.navigate('SystemMonitor', { device })} />
-          <ControlBtn icon="⌨️" label="Keyboard"        color={Colors.violet}  onPress={() => navigation.navigate('Keyboard', { device })} />
-          <ControlBtn icon="🖱️" label="Mouse Control"   color={Colors.violet}  onPress={() => navigation.navigate('MouseControl', { device })} />
-          <ControlBtn icon="📁" label="File Manager"    color={Colors.warn}    onPress={() => navigation.navigate('FileManager', { device })} />
-          <ControlBtn icon="🖥" label="Remote Desktop"  color={Colors.magenta} onPress={() => navigation.navigate('RemoteDashboard', { device })} />
+          <ControlBtn icon="🤖" label="AI Assistant"    color={Colors.pink}    onPress={() => navigation.navigate('AIAssistant', { device })} />
+          <ControlBtn icon="📊" label="System Monitor"  color={Colors.purple}  onPress={() => navigation.navigate('SystemMonitor', { device })} />
+          <ControlBtn icon="⌨️" label="Keyboard"        color={Colors.pink}    onPress={() => navigation.navigate('Keyboard', { device })} />
+          <ControlBtn icon="🖱️" label="Mouse Control"   color={Colors.purple}  onPress={() => navigation.navigate('MouseControl', { device })} />
+          <ControlBtn icon="📁" label="File Manager"    color={Colors.orange}  onPress={() => navigation.navigate('FileManager', { device })} />
+          <ControlBtn icon="🖥" label="Remote Desktop"  color={Colors.pink}    onPress={() => navigation.navigate('RemoteDashboard', { device })} />
         </View>
       </ScrollView>
     </View>
@@ -118,43 +118,43 @@ export default function DeviceDetailsScreen({ navigation, route }: any) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  topBar:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 56, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.divider },
+  topBar:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 56, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.border, backgroundColor: Colors.bgSecondary },
   backBtn:   { paddingVertical: 6 },
-  backText:  { color: Colors.violetDim, fontSize: 13, fontFamily: Fonts.body, letterSpacing: 0.5 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  backText:  { color: Colors.pink, fontSize: 13, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 0.5 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: Colors.bgElevated },
   statusDot:   { width: 6, height: 6, borderRadius: 3 },
-  statusText:  { fontSize: 9, fontFamily: Fonts.ui, letterSpacing: 1.5 },
+  statusText:  { fontSize: 9, fontFamily: Fonts.mono, fontWeight: '700', letterSpacing: 1.5 },
 
   scroll: { padding: Spacing.lg, paddingBottom: 50 },
 
   // Hero
   hero:       { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.xl },
-  heroIcon:   { width: 56, height: 56, borderRadius: 14, backgroundColor: Colors.violetFaint, borderWidth: 1, borderColor: Colors.violetBorder, justifyContent: 'center', alignItems: 'center' },
-  heroIconText:{ color: Colors.violet, fontSize: 28 },
+  heroIcon:   { width: 60, height: 60, borderRadius: Radius.lg, backgroundColor: Colors.bgElevated, borderWidth: 1, borderColor: Colors.pinkBorder, justifyContent: 'center', alignItems: 'center', shadowColor: Colors.pink, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 },
+  heroIconText:{ color: Colors.pink, fontSize: 30 },
   heroText:   { flex: 1 },
-  deviceName: { color: Colors.textPrimary, fontSize: 24, fontFamily: Fonts.display, letterSpacing: 1, marginBottom: 2 },
-  deviceUser: { color: Colors.violet, fontSize: 12, fontFamily: Fonts.mono, marginBottom: 2 },
-  deviceOs:   { color: Colors.textMuted, fontSize: 11, fontFamily: Fonts.body, letterSpacing: 0.5 },
+  deviceName: { color: Colors.textPrimary, fontSize: 24, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 1, marginBottom: 2 },
+  deviceUser: { color: Colors.pink, fontSize: 12, fontFamily: Fonts.mono, fontWeight: '600', marginBottom: 2 },
+  deviceOs:   { color: Colors.textSecondary, fontSize: 12, fontFamily: Fonts.body, letterSpacing: 0.5 },
 
   // Hardware strip
-  hwStrip:   { flexDirection: 'row', backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.violetBorder, borderRadius: Radius.md, marginBottom: Spacing.xl, overflow: 'hidden' },
+  hwStrip:   { flexDirection: 'row', backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.lg, marginBottom: Spacing.xl, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 6 },
   hwItem:    { flex: 1, padding: 14, alignItems: 'center' },
   hwDivider: { width: 1, backgroundColor: Colors.divider, marginVertical: 10 },
-  hwLabel:   { color: Colors.textMuted, fontSize: 8, fontFamily: Fonts.ui, letterSpacing: 2, marginBottom: 6 },
-  hwValue:   { color: Colors.textPrimary, fontSize: 11, fontFamily: Fonts.mono, textAlign: 'center' },
+  hwLabel:   { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.ui, fontWeight: '600', letterSpacing: 2, marginBottom: 6 },
+  hwValue:   { color: Colors.textPrimary, fontSize: 12, fontFamily: Fonts.mono, fontWeight: '600', textAlign: 'center' },
 
   // Info table
-  sectionLabel: { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.ui, letterSpacing: 3, marginBottom: Spacing.sm, marginTop: Spacing.sm },
-  infoCard: { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.violetBorder, borderRadius: Radius.md, overflow: 'hidden', marginBottom: Spacing.xl },
-  infoRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.grid },
-  infoLabel:{ color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.body, letterSpacing: 1 },
-  infoValue:{ color: Colors.textPrimary, fontSize: 12, fontFamily: Fonts.mono, maxWidth: '60%', textAlign: 'right' },
+  sectionLabel: { color: Colors.textSecondary, fontSize: 10, fontFamily: Fonts.ui, fontWeight: '600', letterSpacing: 3, marginBottom: Spacing.sm, marginTop: Spacing.sm },
+  infoCard: { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.lg, overflow: 'hidden', marginBottom: Spacing.xl, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 6 },
+  infoRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: Spacing.lg, borderBottomWidth: 1, borderBottomColor: Colors.divider },
+  infoLabel:{ color: Colors.textSecondary, fontSize: 11, fontFamily: Fonts.body, letterSpacing: 1 },
+  infoValue:{ color: Colors.textPrimary, fontSize: 12, fontFamily: Fonts.mono, fontWeight: '600', maxWidth: '60%', textAlign: 'right' },
 
   // Controls
-  ctrlList: { gap: 8 },
-  ctrlBtn:  { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, backgroundColor: Colors.bgCard, borderWidth: 1, borderRadius: Radius.md, paddingVertical: 14, paddingHorizontal: Spacing.md, overflow: 'hidden' },
-  ctrlAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 2 },
+  ctrlList: { gap: 10 },
+  ctrlBtn:  { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, backgroundColor: Colors.bgCard, borderWidth: 1, borderRadius: Radius.lg, paddingVertical: 14, paddingHorizontal: Spacing.lg, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 6 },
+  ctrlAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3 },
   ctrlIcon: { fontSize: 18, width: 24, textAlign: 'center' },
-  ctrlLabel:{ flex: 1, fontSize: 13, fontFamily: Fonts.ui, letterSpacing: 1 },
-  ctrlArrow:{ fontSize: 18 },
+  ctrlLabel:{ flex: 1, fontSize: 13, fontFamily: Fonts.ui, fontWeight: '600', letterSpacing: 1.5 },
+  ctrlArrow:{ fontSize: 18, fontFamily: Fonts.ui, fontWeight: '700' },
 });

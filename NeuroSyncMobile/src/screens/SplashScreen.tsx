@@ -75,16 +75,16 @@ const s = StyleSheet.create({
 
   center: { alignItems: 'center', gap: 12 },
 
-  iconWrap: { width: 84, height: 84, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  hexIcon:  { position: 'absolute', color: Colors.pink, fontSize: 84, opacity: 0.9 },
-  hexInner: { color: Colors.textPrimary, fontSize: 24, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 3, zIndex: 1 },
+  iconWrap: { width: 80, height: 80, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  hexIcon:  { position: 'absolute', color: Colors.violet, fontSize: 80, opacity: 0.9 },
+  hexInner: { color: Colors.textPrimary, fontSize: 22, fontFamily: Fonts.display, letterSpacing: 3, zIndex: 1 },
 
-  brand:    { color: Colors.textPrimary, fontSize: 30, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 8 },
-  tagline:  { color: Colors.textSecondary, fontSize: 12, fontFamily: Fonts.body, letterSpacing: 2, marginBottom: 32 },
+  brand:    { color: Colors.textPrimary, fontSize: 28, fontFamily: Fonts.display, letterSpacing: 8 },
+  tagline:  { color: Colors.textMuted, fontSize: 11, fontFamily: Fonts.body, letterSpacing: 2, marginBottom: 32 },
 
-  barTrack: { width: 200, height: 3, backgroundColor: Colors.pinkFaint, borderRadius: 99, overflow: 'hidden' },
-  barFill:  { height: 3, backgroundColor: Colors.pink, borderRadius: 99, shadowColor: Colors.pink, shadowOpacity: 0.9, shadowRadius: 6 },
+  barTrack: { width: 180, height: 2, backgroundColor: Colors.violetFaint, borderRadius: 1, overflow: 'hidden' },
+  barFill:  { height: 2, backgroundColor: Colors.violet, borderRadius: 1 },
 
-  status:  { color: Colors.textSecondary, fontSize: 10, fontFamily: Fonts.mono, fontWeight: '600', letterSpacing: 2, marginTop: 12 },
-  version: { position: 'absolute', bottom: 32, color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.mono, letterSpacing: 1 },
+  status:  { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.mono, letterSpacing: 2, marginTop: 12 },
+  version: { position: 'absolute', bottom: 32, color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.mono, letterSpacing: 1 },
 });

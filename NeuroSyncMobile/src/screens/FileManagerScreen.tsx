@@ -46,7 +46,8 @@ function EmptyDir() {
 }
 
 export default function FileManagerScreen({route, navigation}: any) {
-  const deviceId = route?.params?.deviceId;
+  const device = route.params?.device || {};
+  const deviceId = device.id || device.device_id || route?.params?.deviceId || '';
   const [files, setFiles] = useState<FileItem[]>([]);
   const [currentPath, setCurrentPath] = useState('~');
   const [pathHistory, setPathHistory] = useState<string[]>([]);
@@ -167,7 +168,9 @@ export default function FileManagerScreen({route, navigation}: any) {
           {text: 'CANCEL', style: 'cancel'},
           {text: 'RENAME', onPress: async () => {
             try {
-              await sendCommand('rename_file', {path: fullPath(item.name), new_name: newName.trim()});
+              const oldP = fullPath(item.name);
+              const newP = fullPath(newName.trim());
+              await sendCommand('rename_file', {old_path: oldP, new_path: newP});
               await fetchFiles(currentPath);
               Alert.alert('SUCCESS', 'File renamed successfully');
             } catch { Alert.alert('ERROR', 'Could not rename file'); }

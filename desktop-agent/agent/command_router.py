@@ -7,9 +7,18 @@ import time
 from automation.app_launcher import AppLauncher
 from automation.mouse_controller import MouseController
 from automation.keyboard_controller import KeyboardController
+from automation.file_manager import FileManager
 
 logger = logging.getLogger(__name__)
 _REGISTRY: dict[str, dict] = {
+
+    # ── File Manager ──
+    "list_files":        {"fn": lambda c: FileManager.list_files(c.get("path", "~"))},
+    "create_folder":     {"fn": lambda c: FileManager.create_folder(c["path"]),                 "required": ["path"]},
+    "delete_file":       {"fn": lambda c: FileManager.delete_item(c["path"]),                   "required": ["path"]},
+    "rename_file":       {"fn": lambda c: FileManager.rename_item(c["old_path"], c["new_path"]), "required": ["old_path", "new_path"]},
+    "download_file":     {"fn": lambda c: FileManager.download_file(c["path"]),                 "required": ["path"]},
+    "upload_file":       {"fn": lambda c: FileManager.upload_file(c["destination_path"], c["content_b64"]), "required": ["destination_path", "content_b64"]},
 
     # ── App launcher ──
     "wait": {"fn": lambda c: time.sleep(c.get("seconds", 1)) or {"status": "success", "waited": c.get("seconds", 1)}},

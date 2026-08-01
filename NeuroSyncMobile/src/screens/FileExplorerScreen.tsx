@@ -20,7 +20,7 @@ interface FileItem {
 
 export default function FileExplorerScreen({ route, navigation }: any) {
   const device = route.params?.device || {};
-  const deviceId = device.device_id || device.hostname;
+  const deviceId = device.device_id || device.id || device.hostname || device.name;
 
   const [currentPath, setCurrentPath] = useState('~');
   const [parentPath, setParentPath] = useState('~');

@@ -21,7 +21,12 @@ export default function SplashScreen({ navigation }: any) {
     }).start();
 
     const timer = setTimeout(async () => {
-      const hasSession = await restoreSession();
+      let hasSession = false;
+      try {
+        hasSession = await restoreSession();
+      } catch (err) {
+        console.log('Error restoring session:', err);
+      }
       navigation.replace(hasSession ? 'Devices' : 'Login');
     }, 2200);
 

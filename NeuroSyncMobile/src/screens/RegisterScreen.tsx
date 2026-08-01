@@ -19,12 +19,12 @@ function Field({ label, ...props }: any) {
 
 const f = StyleSheet.create({
   wrap:  { gap: 6 },
-  label: { color: Colors.textSecondary, fontSize: 10, fontFamily: Fonts.ui, fontWeight: '600', letterSpacing: 2.5 },
+  label: { color: Colors.textSecondary, fontSize: 9, fontFamily: Fonts.ui, letterSpacing: 2.5, fontWeight: '600' },
   input: {
-    backgroundColor: Colors.bgInput,
+    backgroundColor: Colors.bgElevated,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: Radius.md,
+    borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
     color: Colors.textPrimary,
@@ -116,7 +116,7 @@ export default function RegisterScreen({ navigation }: any) {
           activeOpacity={0.8}
         >
           {loading
-            ? <ActivityIndicator color="#FFFFFF" />
+            ? <ActivityIndicator color={Colors.bg} />
             : <Text style={s.btnText}>CREATE ACCOUNT</Text>
           }
         </TouchableOpacity>
@@ -138,19 +138,30 @@ const s = StyleSheet.create({
   gridRow:  { flex: 1, borderBottomWidth: 0.5, borderBottomColor: Colors.grid },
 
   logoArea: { alignItems: 'center', gap: 8 },
-  hexWrap:  { width: 68, height: 68, justifyContent: 'center', alignItems: 'center' },
-  hexIcon:  { position: 'absolute', color: Colors.pink, fontSize: 68, opacity: 0.9 },
-  hexInner: { color: Colors.textPrimary, fontSize: 18, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 3, zIndex: 1 },
-  brand:    { color: Colors.textPrimary, fontSize: 24, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 6 },
-  sub:      { color: Colors.textSecondary, fontSize: 13, fontFamily: Fonts.body, letterSpacing: 1 },
+  hexWrap:  { width: 64, height: 64, justifyContent: 'center', alignItems: 'center' },
+  hexIcon:  { position: 'absolute', color: Colors.violet, fontSize: 64, opacity: 0.9 },
+  hexInner: { color: Colors.textPrimary, fontSize: 18, fontFamily: Fonts.display, letterSpacing: 3, zIndex: 1 },
+  brand:    { color: Colors.textPrimary, fontSize: 24, fontFamily: Fonts.display, letterSpacing: 6 },
+  sub:      { color: Colors.textMuted, fontSize: 12, fontFamily: Fonts.body, letterSpacing: 1 },
 
   form: { gap: Spacing.lg },
 
-  btn:         { backgroundColor: Colors.pink, borderRadius: Radius.lg, paddingVertical: 16, alignItems: 'center', marginTop: 8, shadowColor: Colors.pink, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12 },
+  btn: {
+    backgroundColor: Colors.pink,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: Colors.pink,
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    elevation: 8,
+  },
   btnDisabled: { opacity: 0.5 },
-  btnText:     { color: '#FFFFFF', fontSize: 14, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 3 },
+  btnText:     { color: '#FFFFFF', fontSize: 13, fontFamily: Fonts.display, letterSpacing: 3, fontWeight: 'bold' },
 
   loginRow:  { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  loginText: { color: Colors.textSecondary, fontSize: 13, fontFamily: Fonts.body },
-  loginLink: { color: Colors.pink, fontSize: 13, fontFamily: Fonts.ui, fontWeight: '700', letterSpacing: 0.5 },
+  loginText: { color: Colors.textMuted, fontSize: 13, fontFamily: Fonts.body },
+  loginLink: { color: Colors.pink, fontSize: 13, fontFamily: Fonts.ui, letterSpacing: 0.5, fontWeight: '600' },
 });

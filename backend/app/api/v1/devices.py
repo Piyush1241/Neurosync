@@ -56,6 +56,7 @@ async def get_device(
     if not d:
         return JSONResponse(status_code=404, content={"error": "Device not found"})
     is_online = _manager and _manager.get_device(device_id) is not None
+    metrics = _manager.get_device_metrics(device_id) if _manager else {}
     return {
         "device_id":   d.device_id,
         "hostname":    d.hostname,
@@ -67,7 +68,35 @@ async def get_device(
         "cpu":         d.cpu,
         "ram_gb":      d.ram_gb,
         "status":      "online" if is_online else "offline",
-        "last_seen":   str(d.last_seen) if d.last_seen else None
+        "last_seen":   str(d.last_seen) if d.last_seen else None,
+        "metrics":     metrics
+    }
+
+@router.get("/system/stats")
+async def get_system_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if _manager and _manager.connected_agents:
+        first_device_id = list(_manager.connected_agents.keys())[0]
+        m = _manager.get_device_metrics(first_device_id)
+        if m:
+            return m
+    # Fallback if agent telemetry not yet received
+    import psutil, time, sys
+    vm = psutil.virtual_memory()
+    du = psutil.disk_usage('/') if sys.platform != 'win32' else psutil.disk_usage('C:\\')
+    uptime_sec = int(time.time() - psutil.boot_time())
+    return {
+        "cpu": round(psutil.cpu_percent(interval=None), 1),
+        "ram": round(vm.percent, 1),
+        "ramTotal": round(vm.total / (1024 ** 3), 1),
+        "ramUsed": round(vm.used / (1024 ** 3), 1),
+        "disk": round(du.percent, 1),
+        "diskTotal": round(du.total / (1024 ** 3), 1),
+        "diskUsed": round(du.used / (1024 ** 3), 1),
+        "uptime": f"{uptime_sec // 3600}h {(uptime_sec % 3600) // 60}m",
+        "processes": len(psutil.pids()),
     }
 
 @router.get("/debug/token")

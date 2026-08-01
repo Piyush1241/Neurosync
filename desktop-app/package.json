@@ -23,6 +23,11 @@
         "from": "../desktop-agent",
         "to": "desktop-agent",
         "filter": ["**/*"]
+      },
+      {
+        "from": "python-embed",
+        "to": "python",
+        "filter": ["**/*"]
       }
     ],
     "mac": { "target": "dmg" },

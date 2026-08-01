@@ -142,6 +142,9 @@ async def handle_agent_connection(websocket: WebSocket, manager: ConnectionManag
             msg_type = msg.get("type")
 
             if msg_type == "heartbeat":
+                metrics = msg.get("metrics")
+                if metrics:
+                    _manager.device_metrics[device_id] = metrics
                 await websocket.send_json({"type": "heartbeat_ack"})
             elif msg_type == "command_result":
                 logger.info(f"Result from {device_id}: {msg}")

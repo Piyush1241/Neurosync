@@ -9,6 +9,7 @@ class ConnectionManager:
     def __init__(self):
         # device_id -> websocket
         self.connected_agents: Dict[str, WebSocket] = {}
+        self.device_metrics: Dict[str, dict] = {}
 
     async def connect(self, device_id: str, websocket: WebSocket):
         await websocket.accept()
@@ -18,10 +19,15 @@ class ConnectionManager:
     def disconnect(self, device_id: str):
         if device_id in self.connected_agents:
             del self.connected_agents[device_id]
+            if device_id in self.device_metrics:
+                del self.device_metrics[device_id]
             logger.info(f"Agent disconnected: {device_id} | Total: {len(self.connected_agents)}")
 
     def get_device(self, device_id: str) -> Optional[WebSocket]:
         return self.connected_agents.get(device_id)
+
+    def get_device_metrics(self, device_id: str) -> dict:
+        return self.device_metrics.get(device_id, {})
 
     def get_all_devices(self) -> list:
         return list(self.connected_agents.keys())

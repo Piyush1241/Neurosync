@@ -9,10 +9,47 @@ let agentProcess;
 let statsProcess;
 let authToken = null;
 
-const customPython = '/Library/Frameworks/Python.framework/Versions/3.12/bin/python3';
-const pythonExe = process.platform === 'win32'
-  ? 'python'
-  : (fs.existsSync(customPython) ? customPython : 'python3');
+function getPythonExecutable() {
+  if (app.isPackaged) {
+    const bundledWin = path.join(process.resourcesPath, 'python', 'python.exe');
+    const bundledMac = path.join(process.resourcesPath, 'python', 'bin', 'python3');
+    const bundledLinux = path.join(process.resourcesPath, 'python', 'bin', 'python3');
+
+    if (process.platform === 'win32' && fs.existsSync(bundledWin)) return bundledWin;
+    if (process.platform === 'darwin' && fs.existsSync(bundledMac)) return bundledMac;
+    if (process.platform === 'linux' && fs.existsSync(bundledLinux)) return bundledLinux;
+  }
+
+  if (process.platform === 'win32') {
+    const localAppData = process.env.LOCALAPPDATA || '';
+    const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
+    const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+
+    const candidates = [
+      path.join(localAppData, 'Programs', 'Python', 'Python312', 'python.exe'),
+      path.join(localAppData, 'Programs', 'Python', 'Python311', 'python.exe'),
+      path.join(localAppData, 'Programs', 'Python', 'Python310', 'python.exe'),
+      path.join(programFiles, 'Python312', 'python.exe'),
+      path.join(programFiles, 'Python311', 'python.exe'),
+      'C:\\Python312\\python.exe',
+      'C:\\Python311\\python.exe',
+      'python',
+      'python3',
+      'py',
+    ];
+
+    for (const cand of candidates) {
+      if (!cand.includes('\\') && !cand.includes('/')) return cand;
+      if (fs.existsSync(cand)) return cand;
+    }
+    return 'python';
+  } else {
+    const customPython = '/Library/Frameworks/Python.framework/Versions/3.12/bin/python3';
+    return fs.existsSync(customPython) ? customPython : 'python3';
+  }
+}
+
+const pythonExe = getPythonExecutable();
 
 const https = require('https');
 
@@ -103,7 +140,46 @@ function createDashboardWindow() {
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
-function startAgent(token) {
+function ensureDependenciesAndStartAgent(token) {
+  if (mainWindow) mainWindow.webContents.send('agent-log', 'Checking Python installation & dependencies...');
+  
+  try {
+    const installProc = spawn(pythonExe, ['-m', 'pip', 'install', 'psutil', 'websockets', 'pyautogui', 'pyperclip', 'requests']);
+    
+    installProc.on('error', (err) => {
+      if (err.code === 'ENOENT') {
+        const missingMsg = '[ERROR] Python 3 is not installed or not found on system PATH. Please install Python 3.10+ from python.org';
+        if (mainWindow) {
+          mainWindow.webContents.send('agent-log', missingMsg);
+          mainWindow.webContents.send('agent-status', 'error');
+        }
+      }
+    });
+
+    installProc.stdout.on('data', (d) => {
+      if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] ${d.toString().trim()}`);
+    });
+    installProc.stderr.on('data', (d) => {
+      if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] ${d.toString().trim()}`);
+    });
+
+    installProc.on('close', (code) => {
+      if (code === 0) {
+        if (mainWindow) mainWindow.webContents.send('agent-log', 'Dependencies ready. Starting NeuroSync Agent...');
+        startAgentProcess(token);
+        startStats();
+      } else {
+        if (mainWindow) mainWindow.webContents.send('agent-log', '[WARNING] Pip install exited with non-zero code. Attempting to start agent...');
+        startAgentProcess(token);
+        startStats();
+      }
+    });
+  } catch (err) {
+    if (mainWindow) mainWindow.webContents.send('agent-log', `[ERROR] Unable to spawn Python: ${err.message}`);
+  }
+}
+
+function startAgentProcess(token) {
   const agentScript = app.isPackaged
   ? path.join(process.resourcesPath, 'desktop-agent', 'agent', 'main.py')
   : path.join(__dirname, '..', 'desktop-agent', 'agent', 'main.py');
@@ -124,8 +200,12 @@ function startAgent(token) {
   });
   agentProcess.on('close', () => {
     if (mainWindow) mainWindow.webContents.send('agent-status', 'disconnected');
-    setTimeout(() => startAgent(authToken), 5000);
+    setTimeout(() => startAgentProcess(authToken), 5000);
   });
+}
+
+function startAgent(token) {
+  ensureDependenciesAndStartAgent(token);
 }
 
 function startStats() {
@@ -172,7 +252,6 @@ async function launchApp(email, token) {
   if (mainWindow) mainWindow.close();
   createDashboardWindow();
   startAgent(token);
-  startStats();
 }
 
 app.whenReady().then(async () => {
@@ -181,7 +260,6 @@ app.whenReady().then(async () => {
     authToken = saved.token;
     createDashboardWindow();
     startAgent(saved.token);
-    startStats();
   } else {
     createLoginWindow();
   }

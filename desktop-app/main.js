@@ -347,3 +347,68 @@ ipcMain.handle('logout', async () => {
   if (mainWindow) mainWindow.close();
   createLoginWindow();
 });
+
+// ── File Manager IPC Handlers ──────────────────────────────────────────────────
+ipcMain.handle('file-list', async (_, dirPath) => {
+  try {
+    const target = (!dirPath || dirPath === '~') ? os.homedir() : path.resolve(dirPath.replace(/^~/, os.homedir()));
+    const entries = fs.readdirSync(target, { withFileTypes: true });
+    const result = [];
+    for (const entry of entries) {
+      try {
+        const fullP = path.join(target, entry.name);
+        const stat = fs.statSync(fullP);
+        const isDir = entry.isDirectory();
+        let sizeStr = '—';
+        if (!isDir) {
+          const bytes = stat.size;
+          if (bytes < 1024) sizeStr = `${bytes} B`;
+          else if (bytes < 1024 * 1024) sizeStr = `${(bytes / 1024).toFixed(1)} KB`;
+          else sizeStr = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        }
+        result.push({
+          name: entry.name,
+          type: isDir ? 'folder' : 'file',
+          size: sizeStr,
+          modified: stat.mtime.toISOString().slice(0, 16).replace('T', ' '),
+          path: fullP
+        });
+      } catch (e) { continue; }
+    }
+    result.sort((a, b) => (a.type !== 'folder') - (b.type !== 'folder') || a.name.localeCompare(b.name));
+    return { status: 'success', currentPath: target, files: result };
+  } catch (err) {
+    return { status: 'error', message: err.message };
+  }
+});
+
+ipcMain.handle('file-create-folder', async (_, folderPath) => {
+  try {
+    const target = folderPath.replace(/^~/, os.homedir());
+    fs.mkdirSync(target, { recursive: true });
+    return { status: 'success' };
+  } catch (err) {
+    return { status: 'error', message: err.message };
+  }
+});
+
+ipcMain.handle('file-delete', async (_, targetPath) => {
+  try {
+    const target = targetPath.replace(/^~/, os.homedir());
+    fs.rmSync(target, { recursive: true, force: true });
+    return { status: 'success' };
+  } catch (err) {
+    return { status: 'error', message: err.message };
+  }
+});
+
+ipcMain.handle('file-rename', async (_, oldPath, newPath) => {
+  try {
+    const oldTarget = oldPath.replace(/^~/, os.homedir());
+    const newTarget = newPath.replace(/^~/, os.homedir());
+    fs.renameSync(oldTarget, newTarget);
+    return { status: 'success' };
+  } catch (err) {
+    return { status: 'error', message: err.message };
+  }
+});

@@ -40,10 +40,14 @@ async def startup():
     from app.db.database import SessionLocal
     from app.models.user import User
     from app.core.security import hash_password
+    import uuid
     db = SessionLocal()
     try:
         if not db.query(User).filter(User.email == "sumit@neurosync.com").first():
+            # Use a deterministic UUID so that JWT tokens survive Render ephemeral DB restarts
+            static_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, "sumit@neurosync.com"))
             user = User(
+                user_id=static_uuid,
                 email="sumit@neurosync.com",
                 password_hash=hash_password("yourpassword")
             )

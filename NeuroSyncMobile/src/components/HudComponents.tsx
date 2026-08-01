@@ -405,8 +405,5 @@ const cardStyles = StyleSheet.create({
   label: { color: Colors.textSecondary, fontSize: 10, letterSpacing: 2, fontFamily: Fonts.ui, fontWeight: '600' },
   value: { fontSize: 24, fontFamily: Fonts.mono, fontWeight: '700' },
   track: { height: 4, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden', marginBottom: 6 },
-  fill: { height: 4, borderRadius: 99 },
   detail: { color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.mono },
-});
-  detail: { color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.uiReg, letterSpacing: 0.5 },
 });

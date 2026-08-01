@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.db.database import get_db
 from app.models.user import User
@@ -32,8 +33,9 @@ async def register(
     req: RegisterRequest,
     db: Session = Depends(get_db)
 ):
+    email_clean = req.email.lower().strip()
     existing = db.query(User).filter(
-        User.email == req.email
+        func.lower(User.email) == email_clean
     ).first()
 
     if existing:
@@ -43,7 +45,7 @@ async def register(
         )
 
     user = User(
-        email=req.email,
+        email=email_clean,
         password_hash=hash_password(req.password)
     )
 
@@ -51,7 +53,7 @@ async def register(
     db.commit()
     db.refresh(user)
 
-    logger.info(f"User registered: {req.email}")
+    logger.info(f"User registered: {email_clean}")
 
     return {
         "message": "Registered successfully",
@@ -64,8 +66,9 @@ async def login(
     req: LoginRequest,
     db: Session = Depends(get_db)
 ):
+    email_clean = req.email.lower().strip()
     user = db.query(User).filter(
-        User.email == req.email
+        func.lower(User.email) == email_clean
     ).first()
 
     if not user:

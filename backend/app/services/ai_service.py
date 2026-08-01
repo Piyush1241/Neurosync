@@ -87,13 +87,14 @@ class AIService:
     def __init__(self, manager, db):
         self.manager = manager
         self.db = db
-        self.client = AsyncOpenAI(api_key=settings.OPEN_API_KEY , base_url="https://openrouter.ai/api/v1")
+        api_key = getattr(settings, "OPEN_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "") or getattr(settings, "OPENAI_API_KEY", "") or "sk-placeholder"
+        self.client = AsyncOpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
 
     def _rule_based_fallback(self, prompt: str) -> dict:
         p = prompt.lower().strip()
         steps = []
         if "notepad" in p:
-            steps.append({"action": "open_app", "payload": {"app_name": "notepad"}})
+            steps.append({"action": "open_notepad"})
             if "type" in p or "write" in p:
                 text_to_type = "Hello"
                 if "type " in p:
@@ -102,13 +103,23 @@ class AIService:
                     text_to_type = prompt.split("write ", 1)[1].strip()
                 steps.append({"action": "type_text", "payload": {"text": text_to_type}})
         elif "calculator" in p or "calc" in p:
-            steps.append({"action": "open_app", "payload": {"app_name": "calc"}})
+            steps.append({"action": "open_calculator"})
         elif "screenshot" in p:
-            steps.append({"action": "screenshot_key"})
+            steps.append({"action": "take_screenshot"})
         elif "lock" in p:
             steps.append({"action": "lock_screen"})
         elif "chrome" in p or "browser" in p:
-            steps.append({"action": "open_app", "payload": {"app_name": "chrome"}})
+            steps.append({"action": "open_chrome"})
+        elif "explorer" in p or "files" in p or "my computer" in p:
+            steps.append({"action": "open_explorer"})
+        elif "running" in p or "process" in p or "task" in p:
+            steps.append({"action": "get_running_processes"})
+        elif "sys" in p or "specs" in p or "info" in p:
+            steps.append({"action": "get_system_info"})
+        elif "shutdown" in p:
+            steps.append({"action": "shutdown_system"})
+        elif "restart" in p:
+            steps.append({"action": "restart_system"})
 
         if steps:
             return {"steps": steps}

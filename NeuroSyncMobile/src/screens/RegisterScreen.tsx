@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
@@ -7,6 +5,7 @@ import {
 } from 'react-native';
 import { Colors, Fonts, Spacing, Radius } from '../theme';
 import { registerUser } from '../services/authService';
+import { ScanlineOverlay, CornerBrackets } from '../components/HudComponents';
 
 function Field({ label, ...props }: any) {
   return (
@@ -19,16 +18,16 @@ function Field({ label, ...props }: any) {
 
 const f = StyleSheet.create({
   wrap:  { gap: 6 },
-  label: { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.ui, letterSpacing: 2.5 },
+  label: { color: Colors.textSecondary, fontSize: 9, fontFamily: Fonts.ui, letterSpacing: 2, fontWeight: '600' },
   input: {
     backgroundColor: Colors.bgInput,
     borderWidth: 1,
-    borderColor: Colors.violetBorder,
+    borderColor: Colors.border,
     borderRadius: Radius.md,
     paddingHorizontal: 16,
     paddingVertical: 14,
     color: Colors.textPrimary,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: Fonts.mono,
   },
 });
@@ -65,92 +64,108 @@ export default function RegisterScreen({ navigation }: any) {
   return (
     <ScrollView style={s.container} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
+      <ScanlineOverlay />
+      <CornerBrackets color={Colors.pinkDim} />
 
-      {/* Background grid */}
-      <View style={s.gridWrap} pointerEvents="none">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <View key={i} style={s.gridRow} />
-        ))}
-      </View>
-
-      {/* Logo */}
-      <View style={s.logoArea}>
-        <View style={s.hexWrap}>
-          <Text style={s.hexIcon}>⬡</Text>
-          <Text style={s.hexInner}>NS</Text>
+      <View style={s.cardContainer}>
+        {/* Logo */}
+        <View style={s.logoArea}>
+          <View style={s.hexWrap}>
+            <Text style={s.hexIcon}>⬡</Text>
+            <Text style={s.hexInner}>NS</Text>
+          </View>
+          <Text style={s.brand}>NEUROSYNC</Text>
+          <Text style={s.sub}>// REGISTRATION PROTOCOL</Text>
         </View>
-        <Text style={s.brand}>NEUROSYNC</Text>
-        <Text style={s.sub}>Create your account</Text>
+
+        {/* Form */}
+        <View style={s.form}>
+          <Field
+            label="EMAIL ADDRESS"
+            placeholder="operator@neurosync.io"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <Field
+            label="PASSWORD"
+            placeholder="Min. 6 characters"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          <Field
+            label="CONFIRM PASSWORD"
+            placeholder="Repeat password"
+            value={confirm}
+            onChangeText={setConfirm}
+            secureTextEntry
+          />
+
+          <TouchableOpacity
+            style={s.btn}
+            onPress={handleRegister}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            {loading
+              ? <ActivityIndicator color="#FFFFFF" />
+              : <Text style={s.btnText}>REGISTER OPERATOR ID</Text>
+            }
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.link} onPress={() => navigation.navigate('Login')}>
+            <Text style={s.linkText}>ALREADY REGISTERED? <Text style={{ color: Colors.pink, fontWeight: 'bold' }}>SIGN IN</Text></Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
-      {/* Form */}
-      <View style={s.form}>
-        <Field
-          label="EMAIL ADDRESS"
-          placeholder="you@example.com"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <Field
-          label="PASSWORD"
-          placeholder="Min. 6 characters"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        <Field
-          label="CONFIRM PASSWORD"
-          placeholder="Repeat password"
-          value={confirm}
-          onChangeText={setConfirm}
-          secureTextEntry
-        />
-
-        <TouchableOpacity
-          style={[s.btn, loading && s.btnDisabled]}
-          onPress={handleRegister}
-          disabled={loading}
-          activeOpacity={0.8}
-        >
-          {loading
-            ? <ActivityIndicator color={Colors.bg} />
-            : <Text style={s.btnText}>CREATE ACCOUNT</Text>
-          }
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Login')} style={s.loginRow}>
-        <Text style={s.loginText}>Already have an account?  </Text>
-        <Text style={s.loginLink}>Sign In</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  content:   { padding: Spacing.xl, flexGrow: 1, justifyContent: 'center', gap: Spacing.xl },
+  content:   { padding: Spacing.lg, paddingTop: 60, paddingBottom: 40, justifyContent: 'center' },
 
-  gridWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'column' },
-  gridRow:  { flex: 1, borderBottomWidth: 0.5, borderBottomColor: Colors.grid },
+  cardContainer: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.xl,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+  },
 
-  logoArea: { alignItems: 'center', gap: 8 },
-  hexWrap:  { width: 64, height: 64, justifyContent: 'center', alignItems: 'center' },
-  hexIcon:  { position: 'absolute', color: Colors.violet, fontSize: 64, opacity: 0.9 },
-  hexInner: { color: Colors.textPrimary, fontSize: 18, fontFamily: Fonts.display, letterSpacing: 3, zIndex: 1 },
-  brand:    { color: Colors.textPrimary, fontSize: 24, fontFamily: Fonts.display, letterSpacing: 6 },
-  sub:      { color: Colors.textMuted, fontSize: 12, fontFamily: Fonts.body, letterSpacing: 1 },
+  logoArea: { alignItems: 'center', marginBottom: Spacing.sm },
+  hexWrap:  { width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.bgElevated, borderWidth: 1, borderColor: Colors.pink, justifyContent: 'center', alignItems: 'center', marginBottom: 12, shadowColor: Colors.pink, shadowRadius: 10, shadowOpacity: 0.4 },
+  hexIcon:  { color: Colors.pink, fontSize: 32, position: 'absolute' },
+  hexInner: { color: Colors.pink, fontSize: 13, fontFamily: Fonts.ui, fontWeight: '700' },
+  brand:    { color: Colors.textPrimary, fontSize: 24, fontFamily: Fonts.ui, letterSpacing: 6, fontWeight: '700' },
+  sub:      { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.mono, letterSpacing: 2, marginTop: 4 },
 
-  form: { gap: Spacing.lg },
+  form: { gap: 16 },
 
-  btn:         { backgroundColor: Colors.violet, borderRadius: Radius.md, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
-  btnDisabled: { opacity: 0.5 },
-  btnText:     { color: Colors.bg, fontSize: 13, fontFamily: Fonts.display, letterSpacing: 3 },
+  btn: {
+    backgroundColor: Colors.pink,
+    borderRadius: Radius.md,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: Colors.pink,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  btnText: { color: '#FFFFFF', fontSize: 12, fontFamily: Fonts.ui, letterSpacing: 3, fontWeight: '700' },
 
-  loginRow:  { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  loginText: { color: Colors.textMuted, fontSize: 13, fontFamily: Fonts.body },
-  loginLink: { color: Colors.violet, fontSize: 13, fontFamily: Fonts.ui, letterSpacing: 0.5 },
+  link:     { alignItems: 'center', marginTop: 6 },
+  linkText: { color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.uiReg, letterSpacing: 1.5 },
 });

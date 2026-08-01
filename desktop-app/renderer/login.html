@@ -4,18 +4,20 @@
 <meta charset="UTF-8"/>
 <title>NeuroSync Login</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Grotesk:wght@400;600;700&family=Sora:wght@400;600;700&display=swap');
   :root {
-    --bg: #0a0e14;
-    --bg-card: #0f1520;
-    --cyan: #00e5ff;
-    --cyan-border: #00e5ff22;
-    --cyan-faint: #00e5ff11;
-    --text: #c8d8e8;
-    --text-dim: #5a7a94;
-    --red: #ff3d3d;
+    --bg: #09090B;
+    --bg-card: #17181D;
+    --bg-elevated: #1F2026;
+    --pink: #FC1FF9;
+    --pink-glow: rgba(252, 31, 249, 0.3);
+    --purple: #BC0EEF;
+    --text: #FFFFFF;
+    --text-dim: #A8A8B3;
+    --red: #E42536;
+    --border: rgba(255, 255, 255, 0.08);
     --font-mono: 'Share Tech Mono', monospace;
-    --font-ui: 'Rajdhani', sans-serif;
+    --font-ui: 'Space Grotesk', 'Sora', sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -30,68 +32,75 @@
   }
   #titlebar {
     -webkit-app-region: drag;
-    height: 36px;
-    background: #080c12;
-    border-bottom: 1px solid var(--cyan-border);
+    height: 38px;
+    background: #09090B;
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     padding: 0 14px;
     gap: 10px;
   }
-  .logo { color: var(--cyan); font-family: var(--font-ui); font-weight: 700; font-size: 12px; letter-spacing: 5px; flex: 1; }
+  .logo { color: var(--pink); font-family: var(--font-ui); font-weight: 700; font-size: 12px; letter-spacing: 4px; flex: 1; text-shadow: 0 0 10px var(--pink-glow); }
   .winbtn {
     -webkit-app-region: no-drag;
-    width: 26px; height: 26px; border-radius: 4px; border: none;
+    width: 26px; height: 26px; border-radius: 6px; border: none;
     background: transparent; color: var(--text-dim); cursor: pointer;
     font-size: 13px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
   }
-  .winbtn:hover { background: var(--cyan-border); color: var(--cyan); }
-  .winbtn.close:hover { background: rgba(255,61,61,0.2); color: var(--red); }
+  .winbtn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+  .winbtn.close:hover { background: rgba(228,37,54,0.25); color: var(--red); }
   #main {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 32px;
+    padding: 24px;
   }
-  .card { width: 100%; max-width: 360px; position: relative; }
-  .card::before { content: ''; position: absolute; top: 0; left: 0; width: 14px; height: 14px; border-top: 1px solid var(--cyan); border-left: 1px solid var(--cyan); }
-  .card::after  { content: ''; position: absolute; top: 0; right: 0; width: 14px; height: 14px; border-top: 1px solid var(--cyan); border-right: 1px solid var(--cyan); }
-  .corner-b::before { content: ''; position: absolute; bottom: 0; left: 0; width: 14px; height: 14px; border-bottom: 1px solid var(--cyan); border-left: 1px solid var(--cyan); }
-  .corner-b::after  { content: ''; position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; border-bottom: 1px solid var(--cyan); border-right: 1px solid var(--cyan); }
-  .inner { padding: 28px 24px; }
-  .ns-logo { text-align: center; margin-bottom: 28px; }
+  .card {
+    width: 100%; max-width: 380px; position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 2px 2px 4px rgba(255,255,255,0.03), inset -4px -4px 8px rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+  .inner { padding: 32px 28px; }
+  .ns-logo { text-align: center; margin-bottom: 24px; }
   .ns-logo .ring {
-    width: 64px; height: 64px; border-radius: 50%;
-    border: 1px solid var(--cyan-border);
+    width: 68px; height: 68px; border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--pink);
+    box-shadow: 0 0 20px var(--pink-glow), inset 2px 2px 5px rgba(0,0,0,0.6);
     display: inline-flex; align-items: center; justify-content: center;
     margin-bottom: 12px; position: relative;
   }
-  .ns-logo .ring::before { content: ''; position: absolute; inset: 6px; border-radius: 50%; border: 1px solid var(--cyan-border); }
-  .ns-logo .ring span { font-family: var(--font-mono); font-size: 14px; color: var(--cyan); }
-  .ns-logo h1 { font-size: 20px; letter-spacing: 6px; color: var(--cyan); font-weight: 700; }
-  .ns-logo p  { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 2px; margin-top: 4px; }
-  .divider { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-  .divider-line { flex: 1; height: 1px; background: var(--cyan-border); }
-  .divider-label { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 3px; }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 3px; margin-bottom: 6px; }
+  .ns-logo .ring span { font-family: var(--font-mono); font-size: 15px; color: var(--pink); font-weight: bold; }
+  .ns-logo h1 { font-size: 22px; letter-spacing: 5px; color: var(--text); font-weight: 700; text-shadow: 0 0 10px var(--pink-glow); }
+  .ns-logo p  { font-family: var(--font-ui); font-size: 9px; color: var(--text-dim); letter-spacing: 2px; margin-top: 4px; font-weight: 600; }
+  .divider { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .divider-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+  .divider-label { font-family: var(--font-ui); font-size: 9px; color: var(--text-dim); letter-spacing: 3px; font-weight: 600; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-family: var(--font-ui); font-size: 9px; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 6px; font-weight: 600; }
   .field input {
-    width: 100%; background: var(--bg-card); border: 1px solid var(--cyan-border);
-    border-radius: 4px; padding: 11px 13px; color: var(--text);
+    width: 100%; background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; color: var(--text);
     font-family: var(--font-mono); font-size: 13px; letter-spacing: 1px;
-    outline: none; transition: border-color 0.2s;
+    outline: none; transition: border-color 0.25s, box-shadow 0.25s;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
   }
-  .field input:focus { border-color: var(--cyan); }
+  .field input:focus { border-color: var(--pink); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5), 0 0 15px var(--pink-glow); }
   #error-msg { font-family: var(--font-mono); font-size: 10px; color: var(--red); letter-spacing: 1px; margin-bottom: 12px; min-height: 16px; text-align: center; }
   #login-btn {
-    width: 100%; background: var(--cyan-faint); border: 1px solid var(--cyan);
-    border-radius: 4px; padding: 13px; color: var(--cyan);
+    width: 100%; background: linear-gradient(135deg, var(--pink), var(--purple));
+    border: none; border-radius: 10px; padding: 14px; color: #FFFFFF;
     font-family: var(--font-ui); font-size: 13px; font-weight: 700;
-    letter-spacing: 4px; cursor: pointer; transition: background 0.2s;
+    letter-spacing: 3px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 8px 25px var(--pink-glow);
   }
-  #login-btn:hover { background: rgba(0,229,255,0.12); }
-  #login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  #login-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px var(--pink-glow); }
+  #login-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
   .status { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); text-align: center; margin-top: 16px; letter-spacing: 1px; }
 </style>
 </head>

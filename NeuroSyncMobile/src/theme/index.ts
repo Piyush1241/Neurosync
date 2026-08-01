@@ -1,36 +1,54 @@
 
 export const Colors = {
+  // Base Surfaces
+  bg:           '#09090B',
+  bgSecondary:  '#111216',
+  bgCard:       '#17181D',
+  bgElevated:   '#1F2026',
+  bgInput:      '#0F1014',
 
-  bg:         '#080B0F',
-  bgCard:     '#0E1318',
-  bgElevated: '#131A22',
-  bgInput:    '#0C1016',
+  // Primary Cyberpunk Neons
+  pink:          '#FC1FF9',
+  pinkDim:       'rgba(252, 31, 249, 0.4)',
+  pinkFaint:     'rgba(252, 31, 249, 0.12)',
+  pinkBorder:    'rgba(252, 31, 249, 0.28)',
 
+  purple:        '#BC0EEF',
+  purpleDark:    '#443061',
+  purpleDim:     'rgba(188, 14, 239, 0.4)',
+  purpleFaint:   'rgba(188, 14, 239, 0.12)',
 
-  violet:      '#7B5EFF',
-  violetDim:   'rgba(123,94,255,0.55)',
-  violetFaint: 'rgba(123,94,255,0.12)',
-  violetBorder:'rgba(123,94,255,0.28)',
+  // Accents
+  red:           '#E42536',
+  orange:        '#FC5E31',
+  cyan:          '#00E5FF',
+  green:         '#00FF88',
 
+  // Compatibility aliases
+  violet:        '#FC1FF9',
+  violetDim:     'rgba(252, 31, 249, 0.55)',
+  violetFaint:   'rgba(252, 31, 249, 0.12)',
+  violetBorder:  'rgba(252, 31, 249, 0.28)',
 
-  magenta:      '#FF2D78',
-  magentaDim:   'rgba(255,45,120,0.55)',
-  magentaFaint: 'rgba(255,45,120,0.1)',
-  magentaBorder:'rgba(255,45,120,0.28)',
+  magenta:       '#BC0EEF',
+  magentaDim:    'rgba(188, 14, 239, 0.55)',
+  magentaFaint:  'rgba(188, 14, 239, 0.12)',
+  magentaBorder: 'rgba(188, 14, 239, 0.28)',
 
+  online:        '#FC1FF9',
+  offline:       '#E42536',
+  warn:          '#FC5E31',
 
-  online:  '#00E5A0',
-  offline: '#FF4466',
-  warn:    '#FFB347',
+  // Typography
+  textPrimary:   '#FFFFFF',
+  textSecondary: '#A8A8B3',
+  textMuted:     '#6D6D78',
 
-
-  textPrimary:   '#E8E0FF',
-  textSecondary: 'rgba(200,190,240,0.55)',
-  textMuted:     'rgba(160,150,210,0.3)',
-
-
-  grid:    'rgba(123,94,255,0.08)',
-  divider: 'rgba(123,94,255,0.15)',
+  // Borders & Dividers
+  border:        'rgba(255, 255, 255, 0.05)',
+  borderActive:  '#FC1FF9',
+  grid:          'rgba(252, 31, 249, 0.06)',
+  divider:       'rgba(255, 255, 255, 0.08)',
 };
 
 export const Fonts = {

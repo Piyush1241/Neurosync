@@ -28,7 +28,7 @@ async def ai_execute(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    from app.api.websocket.command_handler import _manager
+    from app.api.websocket.command_handler import get_manager
     from app.models.device import Device
 
     # Ownership check
@@ -39,10 +39,11 @@ async def ai_execute(
     if not device:
         return JSONResponse(status_code=403, content={"error": "Device not found or access denied"})
 
-    if _manager is None:
+    manager = get_manager()
+    if manager is None:
         return JSONResponse(status_code=503, content={"error": "Manager not initialized"})
 
-    service = AIService(manager=_manager, db=db)
+    service = AIService(manager=manager, db=db)
     result = await service.execute_ai_task(
         device_id=req.device_id,
         prompt=req.prompt,

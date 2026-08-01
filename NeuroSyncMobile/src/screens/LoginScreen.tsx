@@ -53,6 +53,7 @@ function ArcReactor({ size = 100 }: { size?: number }) {
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleEmailLogin = async () => {
@@ -129,14 +130,23 @@ export default function LoginScreen({ navigation }: any) {
 
         <View style={styles.inputWrap}>
           <Text style={styles.inputLabel}>PASSWORD</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            placeholderTextColor={Colors.textMuted}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={styles.pwWrap}>
+            <TextInput
+              style={[styles.input, { flex: 1, borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRightWidth: 0 }]}
+              placeholder="••••••••"
+              placeholderTextColor={Colors.textMuted}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity
+              style={styles.pwToggle}
+              onPress={() => setShowPassword(!showPassword)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.pwToggleText}>{showPassword ? 'HIDE' : 'SHOW'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Sign In */}
@@ -212,6 +222,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.hud,
     letterSpacing: 1,
+  },
+  pwWrap: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  pwToggle: {
+    backgroundColor: Colors.bgElevated,
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderColor: Colors.border,
+    borderTopRightRadius: 10,
+    borderBottomRightRadius: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pwToggleText: {
+    color: Colors.pink,
+    fontSize: 10,
+    fontFamily: Fonts.ui,
+    letterSpacing: 1.5,
+    fontWeight: '700',
   },
 
   primaryBtn: {

@@ -89,7 +89,33 @@ class AIService:
         self.db = db
         self.client = AsyncOpenAI(api_key=settings.OPEN_API_KEY , base_url="https://openrouter.ai/api/v1")
 
+    def _rule_based_fallback(self, prompt: str) -> dict:
+        p = prompt.lower().strip()
+        steps = []
+        if "notepad" in p:
+            steps.append({"action": "open_app", "payload": {"app_name": "notepad"}})
+            if "type" in p or "write" in p:
+                text_to_type = "Hello"
+                if "type " in p:
+                    text_to_type = prompt.split("type ", 1)[1].strip()
+                elif "write " in p:
+                    text_to_type = prompt.split("write ", 1)[1].strip()
+                steps.append({"action": "type_text", "payload": {"text": text_to_type}})
+        elif "calculator" in p or "calc" in p:
+            steps.append({"action": "open_app", "payload": {"app_name": "calc"}})
+        elif "screenshot" in p:
+            steps.append({"action": "screenshot_key"})
+        elif "lock" in p:
+            steps.append({"action": "lock_screen"})
+        elif "chrome" in p or "browser" in p:
+            steps.append({"action": "open_app", "payload": {"app_name": "chrome"}})
+
+        if steps:
+            return {"steps": steps}
+        return {}
+
     async def generate_commands(self, prompt: str) -> dict:
+        fallback = self._rule_based_fallback(prompt)
         try:
             response = await self.client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -105,12 +131,14 @@ class AIService:
                 raw = raw.split("```")[1]
                 if raw.startswith("json"):
                     raw = raw[4:]
-            return json.loads(raw.strip())
-        except json.JSONDecodeError as e:
-            logger.error(f"GPT returned invalid JSON: {e}")
-            return {"steps": [], "error": "Failed to parse AI response"}
+            parsed = json.loads(raw.strip())
+            if parsed.get("steps"):
+                return parsed
+            return fallback if fallback else parsed
         except Exception as e:
-            logger.error(f"OpenAI error: {e}")
+            logger.warning(f"AI API call failed, using fallback: {e}")
+            if fallback:
+                return fallback
             return {"steps": [], "error": str(e)}
 
     async def execute_ai_task(self, device_id: str, prompt: str, user_id: str) -> dict:

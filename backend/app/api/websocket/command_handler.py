@@ -20,6 +20,9 @@ def set_manager(manager: ConnectionManager):
     global _manager
     _manager = manager
 
+def get_manager() -> ConnectionManager:
+    return _manager
+
 
 class CommandRequest(BaseModel):
     device_id: str

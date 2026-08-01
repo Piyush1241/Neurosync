@@ -33,8 +33,8 @@ _REGISTRY: dict[str, dict] = {
     "is_app_running":    {"fn": lambda c: AppLauncher.is_running(c["label"]), "required": ["label"]},
 
     # ── Mouse ──
-    "mouse_move":             {"fn": lambda c: MouseController.move(c["x"], c["y"], c.get("duration", 0.2)),             "required": ["x", "y"]},
-    "mouse_move_relative":    {"fn": lambda c: MouseController.move_relative(c["dx"], c["dy"], c.get("duration", 0.2)), "required": ["dx", "dy"]},
+    "mouse_move":             {"fn": lambda c: MouseController.move(c["x"], c["y"], c.get("duration", 0.0)),             "required": ["x", "y"]},
+    "mouse_move_relative":    {"fn": lambda c: MouseController.move_relative(c["dx"], c["dy"], c.get("duration", 0.0)), "required": ["dx", "dy"]},
     "mouse_move_smooth":      {"fn": lambda c: MouseController.move_smooth(c["x"], c["y"], c.get("steps", 20)),         "required": ["x", "y"]},
     "mouse_click":            {"fn": lambda c: MouseController.click(c.get("x"), c.get("y"), c.get("button", "left"))},
     "mouse_right_click":      {"fn": lambda c: MouseController.right_click(c.get("x"), c.get("y"))},

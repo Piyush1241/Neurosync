@@ -33,14 +33,19 @@ export default function MouseControlScreen({ navigation, route }: any) {
         lastPos.current = { x: gs.x0, y: gs.y0 };
       },
       onPanResponderMove: (_, gs) => {
-        const dx = Math.round(gs.dx);
-        const dy = Math.round(gs.dy);
-        setStatus(`DELTA  X:${dx > 0 ? '+' : ''}${dx}  Y:${dy > 0 ? '+' : ''}${dy}`);
-        // update visual cursor position (clamped)
-        setCursorX(Math.max(10, Math.min(PAD_SIZE - 10, PAD_SIZE / 2 + dx)));
-        setCursorY(Math.max(10, Math.min(PAD_SIZE * 0.75 - 10, PAD_SIZE * 0.37 + dy)));
-        sendCommand(deviceId, 'mouse_move_relative', { dx, dy }).catch(() => {});
-        lastPos.current = { x: gs.moveX, y: gs.moveY };
+        const stepDx = Math.round(gs.moveX - lastPos.current.x);
+        const stepDy = Math.round(gs.moveY - lastPos.current.y);
+
+        if (stepDx !== 0 || stepDy !== 0) {
+          const totalDx = Math.round(gs.dx);
+          const totalDy = Math.round(gs.dy);
+          setStatus(`DELTA  X:${stepDx > 0 ? '+' : ''}${stepDx}  Y:${stepDy > 0 ? '+' : ''}${stepDy}`);
+          setCursorX(Math.max(10, Math.min(PAD_SIZE - 10, PAD_SIZE / 2 + totalDx)));
+          setCursorY(Math.max(10, Math.min(PAD_SIZE * 0.75 - 10, PAD_SIZE * 0.37 + totalDy)));
+
+          sendCommand(deviceId, 'mouse_move_relative', { dx: stepDx, dy: stepDy, duration: 0.0 }).catch(() => {});
+          lastPos.current = { x: gs.moveX, y: gs.moveY };
+        }
       },
       onPanResponderRelease: () => {
         setStatus('AWAITING INPUT');

@@ -6,7 +6,7 @@ import logging
 from typing import Optional
 
 pyautogui.FAILSAFE = False
-pyautogui.PAUSE = 0.05           
+pyautogui.PAUSE = 0.0
 
 logger = logging.getLogger(__name__)
 
@@ -40,23 +40,28 @@ class MouseController:
     # ── Movement ──────────────────────────────────────────────────
 
     @classmethod
-    def move(cls, x: int, y: int, duration: float = 0.2) -> dict:
+    def move(cls, x: int, y: int, duration: float = 0.0) -> dict:
         """Move mouse to absolute position (x, y)."""
         x, y = cls._clamp(x, y)
         try:
-            pyautogui.moveTo(x, y, duration=duration)
+            pyautogui.FAILSAFE = False
+            pyautogui.moveTo(x, y, duration=duration, _pause=False)
             cls._record(x, y)
             return {"status": "success", "x": x, "y": y}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
     @classmethod
-    def move_relative(cls, dx: int, dy: int, duration: float = 0.2) -> dict:
+    def move_relative(cls, dx: int, dy: int, duration: float = 0.0) -> dict:
         """Move mouse by (dx, dy) relative to current position."""
         try:
+            pyautogui.FAILSAFE = False
             cx, cy = pyautogui.position()
-            pyautogui.moveRel(dx, dy, duration=duration)
-            nx, ny = pyautogui.position()
+            nx, ny = cls._clamp(cx + dx, cy + dy)
+            if duration > 0:
+                pyautogui.moveTo(nx, ny, duration=duration, _pause=False)
+            else:
+                pyautogui.moveTo(nx, ny, _pause=False)
             cls._record(nx, ny)
             return {"status": "success", "x": nx, "y": ny, "moved_by": {"dx": dx, "dy": dy}}
         except Exception as e:

@@ -22,10 +22,6 @@ import { Colors, Fonts, Spacing, Radius } from '../theme';
 import { CornerBrackets, ScanlineOverlay } from '../components/HudComponents';
 import { loginUser } from '../services/authService';
 
-GoogleSignin.configure({
-  webClientId: '639946205950-mqi82vf5budradj2r9jlatfsaemkam51.apps.googleusercontent.com',
-});
-
 // Cyberpunk Neomorphic Arc reactor logo
 function ArcReactor({ size = 100 }: { size?: number }) {
   const cx = size / 2, cy = size / 2;
@@ -54,6 +50,16 @@ export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    try {
+      GoogleSignin.configure({
+        webClientId: '639946205950-mqi82vf5budradj2r9jlatfsaemkam51.apps.googleusercontent.com',
+      });
+    } catch (e) {
+      console.log('GoogleSignin configure error:', e);
+    }
+  }, []);
 
   const handleEmailLogin = async () => {
     if (!email || !password) {

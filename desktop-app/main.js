@@ -144,7 +144,7 @@ function ensureDependenciesAndStartAgent(token) {
   if (mainWindow) mainWindow.webContents.send('agent-log', 'Checking Python installation & dependencies...');
   
   try {
-    const installProc = spawn(pythonExe, ['-m', 'pip', 'install', 'psutil', 'websockets', 'pyautogui', 'pyperclip', 'requests']);
+    const installProc = spawn(pythonExe, ['-m', 'pip', 'install', 'python-dotenv', 'psutil', 'websockets', 'pyautogui', 'pyperclip', 'requests']);
     
     installProc.on('error', (err) => {
       if (err.code === 'ENOENT') {

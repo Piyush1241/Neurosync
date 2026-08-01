@@ -13,8 +13,11 @@ import logging
 import os
 import signal
 import sys
-from dotenv import load_dotenv
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from connection.websocket_client import WebSocketClient

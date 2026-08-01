@@ -344,7 +344,11 @@
 <div id="titlebar">
   <span class="logo">NEUROSYNC</span>
   <span class="subtitle">// DESKTOP CONTROL AGENT v1.0</span>
-  <button class="winbtn" onclick="window.electronAPI.logout()" title="Sign Out" style="margin-right:8px; color: #ff3d3d; font-size:11px; letter-spacing:1px; width:auto; padding: 0 8px; font-family: 'Rajdhani', sans-serif;">⏻ SIGN OUT</button>
+  <div id="account-pill" style="display: flex; align-items: center; gap: 6px; font-family: var(--font-ui); font-size: 10px; color: var(--pink); border: 1px solid var(--cyan-border); padding: 4px 10px; border-radius: 20px; background: var(--bg-elevated); margin-right: 8px; font-weight: 600;">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    <span id="user-email-display">—</span>
+  </div>
+  <button class="winbtn" onclick="window.electronAPI.logout()" title="Sign Out" style="margin-right:8px; color: #ff3d3d; font-size:11px; letter-spacing:1px; width:auto; padding: 0 8px; font-family: var(--font-ui); font-weight: 600;">⏻ SIGN OUT</button>
   <button class="winbtn" onclick="window.electronAPI.minimizeWindow()">─</button>
   <button class="winbtn" onclick="window.electronAPI.maximizeWindow()">□</button>
   <button class="winbtn close" onclick="window.electronAPI.closeWindow()">✕</button>
@@ -396,8 +400,12 @@
       <div class="gauge-track"><div class="gauge-fill net" id="net-bar" style="width:0%"></div></div>
     </div>
 
-    <div class="section-label" style="margin-top:20px">DEVICE INFO</div>
+    <div class="section-label" style="margin-top:20px">DEVICE & ACCOUNT INFO</div>
     <div class="info-grid">
+      <div class="info-cell" style="grid-column: 1 / -1;">
+        <div class="info-cell-label">CONNECTED ACCOUNT</div>
+        <div class="info-cell-val" id="info-account" style="color: var(--pink); word-break: break-all;">—</div>
+      </div>
       <div class="info-cell">
         <div class="info-cell-label">HOSTNAME</div>
         <div class="info-cell-val" id="info-host">—</div>
@@ -658,6 +666,16 @@ function addLog(text, type = 'info') {
 
 // --- Electron IPC ---
 if (window.electronAPI) {
+  if (window.electronAPI.getSavedEmail) {
+    window.electronAPI.getSavedEmail().then(email => {
+      if (email) {
+        document.getElementById('user-email-display').textContent = email;
+        const accEl = document.getElementById('info-account');
+        if (accEl) accEl.textContent = email;
+      }
+    });
+  }
+
   window.electronAPI.onStatsUpdate((data) => {
     applyRealStats(data);
   });

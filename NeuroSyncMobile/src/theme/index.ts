@@ -35,6 +35,8 @@ export const Colors = {
   magentaFaint:  'rgba(188, 14, 239, 0.12)',
   magentaBorder: 'rgba(188, 14, 239, 0.28)',
 
+  amber:         '#FC5E31',
+  blue:          '#00E5FF',
   online:        '#FC1FF9',
   offline:       '#E42536',
   warn:          '#FC5E31',

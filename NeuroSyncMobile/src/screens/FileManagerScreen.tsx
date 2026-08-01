@@ -63,8 +63,13 @@ export default function FileManagerScreen({route, navigation}: any) {
   const [sortBy, setSortBy] = useState<'name' | 'size' | 'date'>('name');
   const [sortAsc, setSortAsc] = useState(true);
 
-  const sendCommand = async (command: string, args: object) => {
-    const response = await api.post(`/api/v1/devices/${deviceId}/command`, {command, args});
+  const sendCommand = async (action: string, payload: object) => {
+    if (!deviceId) throw new Error('No device ID');
+    const response = await api.post('/api/v1/command', {
+      device_id: deviceId,
+      action: action,
+      payload: payload,
+    });
     return response.data?.result || response.data;
   };
 

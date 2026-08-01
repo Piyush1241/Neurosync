@@ -1,7 +1,7 @@
 import logging
 import time
 import traceback
-from typing import Any
+from typing import Any, Optional
 import time
 
 from automation.app_launcher import AppLauncher
@@ -95,7 +95,7 @@ _REGISTRY: dict[str, dict] = {
 
 # ── Validator ─────────────────────────────────────────────────────────────────
 
-def _validate(command: dict, entry: dict) -> str | None:
+def _validate(command: dict, entry: dict) -> Optional[str]:
     """Return an error message if required fields are missing, else None."""
     required = entry.get("required", [])
     missing = [f for f in required if f not in command]

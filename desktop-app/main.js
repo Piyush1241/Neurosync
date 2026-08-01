@@ -142,22 +142,42 @@ function createDashboardWindow() {
 }
 
 function ensureDependenciesAndStartAgent(token) {
-  if (mainWindow) mainWindow.webContents.send('agent-log', 'Checking Python dependencies (psutil, websockets, pyautogui)...');
+  if (mainWindow) mainWindow.webContents.send('agent-log', 'Checking Python installation & dependencies...');
   
-  const installProc = spawn(pythonExe, ['-m', 'pip', 'install', 'psutil', 'websockets', 'pyautogui', 'pyperclip', 'requests']);
-  
-  installProc.stdout.on('data', (d) => {
-    if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] ${d.toString().trim()}`);
-  });
-  installProc.stderr.on('data', (d) => {
-    if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] ${d.toString().trim()}`);
-  });
+  try {
+    const installProc = spawn(pythonExe, ['-m', 'pip', 'install', 'psutil', 'websockets', 'pyautogui', 'pyperclip', 'requests']);
+    
+    installProc.on('error', (err) => {
+      if (err.code === 'ENOENT') {
+        const missingMsg = '[ERROR] Python 3 is not installed or not found on system PATH. Please install Python 3.10+ from python.org';
+        if (mainWindow) {
+          mainWindow.webContents.send('agent-log', missingMsg);
+          mainWindow.webContents.send('agent-status', 'error');
+        }
+      }
+    });
 
-  installProc.on('close', () => {
-    if (mainWindow) mainWindow.webContents.send('agent-log', 'Dependencies ready. Starting NeuroSync Agent...');
-    startAgentProcess(token);
-    startStats();
-  });
+    installProc.stdout.on('data', (d) => {
+      if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] ${d.toString().trim()}`);
+    });
+    installProc.stderr.on('data', (d) => {
+      if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] ${d.toString().trim()}`);
+    });
+
+    installProc.on('close', (code) => {
+      if (code === 0) {
+        if (mainWindow) mainWindow.webContents.send('agent-log', 'Dependencies ready. Starting NeuroSync Agent...');
+        startAgentProcess(token);
+        startStats();
+      } else {
+        if (mainWindow) mainWindow.webContents.send('agent-log', '[WARNING] Pip install exited with non-zero code. Attempting to start agent...');
+        startAgentProcess(token);
+        startStats();
+      }
+    });
+  } catch (err) {
+    if (mainWindow) mainWindow.webContents.send('agent-log', `[ERROR] Unable to spawn Python: ${err.message}`);
+  }
 }
 
 function startAgentProcess(token) {

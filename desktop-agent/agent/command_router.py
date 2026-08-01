@@ -1,24 +1,24 @@
 import logging
 import time
 import traceback
-from typing import Any
+from typing import Any, Optional
 import time
 
 from automation.app_launcher import AppLauncher
 from automation.mouse_controller import MouseController
 from automation.keyboard_controller import KeyboardController
-from automation.file_manager import FileManager
+from automation.file_transfer_engine import FileTransferEngine
 
 logger = logging.getLogger(__name__)
 _REGISTRY: dict[str, dict] = {
 
-    # ── File Manager ──
-    "list_files":        {"fn": lambda c: FileManager.list_files(c.get("path", "~"))},
-    "create_folder":     {"fn": lambda c: FileManager.create_folder(c["path"]),                 "required": ["path"]},
-    "delete_file":       {"fn": lambda c: FileManager.delete_item(c["path"]),                   "required": ["path"]},
-    "rename_file":       {"fn": lambda c: FileManager.rename_item(c["old_path"], c["new_path"]), "required": ["old_path", "new_path"]},
-    "download_file":     {"fn": lambda c: FileManager.download_file(c["path"]),                 "required": ["path"]},
-    "upload_file":       {"fn": lambda c: FileManager.upload_file(c["destination_path"], c["content_b64"]), "required": ["destination_path", "content_b64"]},
+    # ── Remote File Transfer & Management ──
+    "file_list_dir":     {"fn": lambda c: FileTransferEngine.list_dir(c.get("dir_path", "~"))},
+    "file_read_text":    {"fn": lambda c: FileTransferEngine.read_file_text(c["file_path"]), "required": ["file_path"]},
+    "file_save_text":    {"fn": lambda c: FileTransferEngine.save_file_text(c["file_path"], c["content"]), "required": ["file_path", "content"]},
+    "file_get_preview":  {"fn": lambda c: FileTransferEngine.get_file_preview(c["file_path"]), "required": ["file_path"]},
+    "file_read_chunk":   {"fn": lambda c: FileTransferEngine.read_file_chunk(c["file_path"], c["chunk_index"]), "required": ["file_path", "chunk_index"]},
+    "file_write_chunk":  {"fn": lambda c: FileTransferEngine.write_file_chunk(c["file_path"], c["chunk_index"], c["total_chunks"], c["chunk_b64"]), "required": ["file_path", "chunk_index", "total_chunks", "chunk_b64"]},
 
     # ── App launcher ──
     "wait": {"fn": lambda c: time.sleep(c.get("seconds", 1)) or {"status": "success", "waited": c.get("seconds", 1)}},
@@ -95,7 +95,7 @@ _REGISTRY: dict[str, dict] = {
 
 # ── Validator ─────────────────────────────────────────────────────────────────
 
-def _validate(command: dict, entry: dict) -> str | None:
+def _validate(command: dict, entry: dict) -> Optional[str]:
     """Return an error message if required fields are missing, else None."""
     required = entry.get("required", [])
     missing = [f for f in required if f not in command]

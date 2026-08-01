@@ -104,12 +104,12 @@ export default function DeviceDetailsScreen({ navigation, route }: any) {
         {/* Controls */}
         <Text style={s.sectionLabel}>CONTROLS</Text>
         <View style={s.ctrlList}>
-          <ControlBtn icon="🤖" label="AI Assistant"    color={Colors.violet}  onPress={() => navigation.navigate('AIAssistant', { device })} />
-          <ControlBtn icon="📊" label="System Monitor"  color={Colors.online}  onPress={() => navigation.navigate('SystemMonitor', { device })} />
-          <ControlBtn icon="⌨️" label="Keyboard"        color={Colors.violet}  onPress={() => navigation.navigate('Keyboard', { device })} />
-          <ControlBtn icon="🖱️" label="Mouse Control"   color={Colors.violet}  onPress={() => navigation.navigate('MouseControl', { device })} />
-          <ControlBtn icon="📁" label="File Manager"    color={Colors.warn}    onPress={() => navigation.navigate('FileManager', { device })} />
-          <ControlBtn icon="🖥" label="Remote Desktop"  color={Colors.magenta} onPress={() => navigation.navigate('RemoteDashboard', { device })} />
+          <ControlBtn icon="🤖" label="AI Assistant"          color={Colors.violet}  onPress={() => navigation.navigate('AIAssistant', { device })} />
+          <ControlBtn icon="📁" label="Remote File Explorer" color={Colors.cyan}    onPress={() => navigation.navigate('FileExplorer', { device })} />
+          <ControlBtn icon="📊" label="System Monitor"        color={Colors.online}  onPress={() => navigation.navigate('SystemMonitor', { device })} />
+          <ControlBtn icon="⌨️" label="Keyboard"              color={Colors.violet}  onPress={() => navigation.navigate('Keyboard', { device })} />
+          <ControlBtn icon="🖱️" label="Mouse Control"         color={Colors.violet}  onPress={() => navigation.navigate('MouseControl', { device })} />
+          <ControlBtn icon="🖥" label="Remote Desktop"        color={Colors.magenta} onPress={() => navigation.navigate('RemoteDashboard', { device })} />
         </View>
       </ScrollView>
     </View>

@@ -4,13 +4,13 @@ import os
 import shutil
 import psutil
 import logging
-from typing import Optional, List
+from typing import Optional, List, Union
 
 logger = logging.getLogger(__name__)
 
 
 class AppLauncher:
-    _launched: dict[str, psutil.Process] = {}
+    _launched: dict = {}
 
     @staticmethod
     def _system() -> str:
@@ -31,7 +31,7 @@ class AppLauncher:
         return None
 
     @classmethod
-    def _launch(cls, args: list[str] | str, shell: bool = False, label: str = "") -> dict:
+    def _launch(cls, args: Union[List[str], str], shell: bool = False, label: str = "") -> dict:
         try:
             proc = subprocess.Popen(
                 args,

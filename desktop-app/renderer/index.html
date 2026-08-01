@@ -685,7 +685,10 @@ function fmNextPage() {
 }
 
 async function transferFmFile(filePath, fileName) {
-  alert(`File Transfer Initiated for "${fileName}".\nPath: ${filePath}`);
+  const res = await window.electronAPI.openSystemExplorer(filePath);
+  if (res && res.status === 'error') {
+    alert(`Could not open path: ${res.message}`);
+  }
 }
 
 async function createFmFolder() {

@@ -55,7 +55,9 @@ export const Fonts = {
   mono:    'SpaceMono-Regular',
   display: 'Rajdhani-Bold',
   ui:      'Rajdhani-SemiBold',
+  uiReg:   'Rajdhani-Regular',
   body:    'Rajdhani-Regular',
+  hud:     'SpaceMono-Regular',
 };
 
 export const Spacing = {

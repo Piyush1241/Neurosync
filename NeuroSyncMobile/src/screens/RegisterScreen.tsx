@@ -19,12 +19,12 @@ function Field({ label, ...props }: any) {
 
 const f = StyleSheet.create({
   wrap:  { gap: 6 },
-  label: { color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.ui, letterSpacing: 2.5 },
+  label: { color: Colors.textSecondary, fontSize: 9, fontFamily: Fonts.ui, letterSpacing: 2.5, fontWeight: '600' },
   input: {
-    backgroundColor: Colors.bgInput,
+    backgroundColor: Colors.bgElevated,
     borderWidth: 1,
-    borderColor: Colors.violetBorder,
-    borderRadius: Radius.md,
+    borderColor: Colors.border,
+    borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
     color: Colors.textPrimary,
@@ -146,11 +146,22 @@ const s = StyleSheet.create({
 
   form: { gap: Spacing.lg },
 
-  btn:         { backgroundColor: Colors.violet, borderRadius: Radius.md, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
+  btn: {
+    backgroundColor: Colors.pink,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: Colors.pink,
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    elevation: 8,
+  },
   btnDisabled: { opacity: 0.5 },
-  btnText:     { color: Colors.bg, fontSize: 13, fontFamily: Fonts.display, letterSpacing: 3 },
+  btnText:     { color: '#FFFFFF', fontSize: 13, fontFamily: Fonts.display, letterSpacing: 3, fontWeight: 'bold' },
 
   loginRow:  { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   loginText: { color: Colors.textMuted, fontSize: 13, fontFamily: Fonts.body },
-  loginLink: { color: Colors.violet, fontSize: 13, fontFamily: Fonts.ui, letterSpacing: 0.5 },
+  loginLink: { color: Colors.pink, fontSize: 13, fontFamily: Fonts.ui, letterSpacing: 0.5, fontWeight: '600' },
 });

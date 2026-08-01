@@ -10,22 +10,22 @@ interface Command {
   label: string;
   action: string;
   icon: string;
-  color?: string;
+  colorKey?: string;
 }
 
 const LAUNCH_COMMANDS: Command[] = [
-  {label: 'Open Notepad', action: 'open_notepad', icon: '📝', color: Colors.cyan},
-  {label: 'Open Chrome', action: 'open_chrome', icon: '🌐', color: Colors.amber},
-  {label: 'Open VS Code', action: 'open_vscode', icon: '💻', color: Colors.blue},
+  {label: 'Open Notepad', action: 'open_notepad', icon: '📝', colorKey: 'pink'},
+  {label: 'Open Chrome', action: 'open_chrome', icon: '🌐', colorKey: 'orange'},
+  {label: 'Open VS Code', action: 'open_vscode', icon: '💻', colorKey: 'purple'},
 ];
 
 const POWER_COMMANDS: Command[] = [
-  {label: 'Lock Screen', action: 'lock_screen', icon: '🔒', color: Colors.red},
-  {label: 'Show Desktop', action: 'show_desktop', icon: '🖥', color: Colors.amber},
+  {label: 'Lock Screen', action: 'lock_screen', icon: '🔒', colorKey: 'red'},
+  {label: 'Show Desktop', action: 'show_desktop', icon: '🖥', colorKey: 'orange'},
 ];
 
 function CommandBtn({item, onPress}: {item: Command; onPress: () => void}) {
-  const color = item.color ?? Colors.cyan;
+  const color = item.colorKey ? (Colors as any)[item.colorKey] : Colors.pink;
   return (
     <TouchableOpacity
       style={[styles.cmdBtn, {borderColor: `${color}33`}]}

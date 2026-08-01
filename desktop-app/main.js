@@ -151,20 +151,41 @@ function createDashboardWindow() {
 }
 
 function ensureDependenciesAndStartAgent(token) {
-  if (mainWindow) mainWindow.webContents.send('agent-log', 'Checking Python installation & dependencies...');
+  if (mainWindow) mainWindow.webContents.send('agent-log', 'Checking Python dependencies...');
   
-  try {
-    const installProc = spawn(pythonExe, ['-m', 'pip', 'install', 'psutil', 'websockets', 'pyautogui', 'pyperclip', 'requests']);
-    
-    installProc.on('error', (err) => {
-      if (err.code === 'ENOENT') {
-        const missingMsg = '[ERROR] Python 3 is not installed or not found on system PATH. Please install Python 3.10+ from python.org';
-        if (mainWindow) {
-          mainWindow.webContents.send('agent-log', missingMsg);
-          mainWindow.webContents.send('agent-status', 'error');
-        }
+  const checkCmd = 'import dotenv, psutil, websockets, pyautogui, pyperclip, requests; print("DEPS_OK")';
+  const checkProc = spawn(pythonExe, ['-c', checkCmd]);
+  
+  let checkOutput = '';
+  checkProc.stdout.on('data', (d) => { checkOutput += d.toString(); });
+  
+  checkProc.on('close', (code) => {
+    if (code === 0 && checkOutput.includes('DEPS_OK')) {
+      if (mainWindow) mainWindow.webContents.send('agent-log', 'All dependencies already satisfied. Starting NeuroSync Agent...');
+      startAgentProcess(token);
+      startStats();
+    } else {
+      if (mainWindow) mainWindow.webContents.send('agent-log', 'Missing dependencies detected. Installing required packages via pip...');
+      runPipInstall(token);
+    }
+  });
+
+  checkProc.on('error', (err) => {
+    if (err.code === 'ENOENT') {
+      const missingMsg = '[ERROR] Python 3 is not installed or not found on system PATH. Please install Python 3.10+ from python.org';
+      if (mainWindow) {
+        mainWindow.webContents.send('agent-log', missingMsg);
+        mainWindow.webContents.send('agent-status', 'error');
       }
-    });
+    } else {
+      runPipInstall(token);
+    }
+  });
+}
+
+function runPipInstall(token) {
+  try {
+    const installProc = spawn(pythonExe, ['-m', 'pip', 'install', 'python-dotenv', 'psutil', 'websockets', 'pyautogui', 'pyperclip', 'requests']);
 
     installProc.stdout.on('data', (d) => {
       if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] ${d.toString().trim()}`);

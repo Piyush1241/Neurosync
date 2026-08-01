@@ -10,22 +10,40 @@ interface Command {
   label: string;
   action: string;
   icon: string;
-  colorKey?: string;
+  color?: string;
 }
 
 const LAUNCH_COMMANDS: Command[] = [
-  {label: 'Open Notepad', action: 'open_notepad', icon: '📝', colorKey: 'pink'},
-  {label: 'Open Chrome', action: 'open_chrome', icon: '🌐', colorKey: 'orange'},
-  {label: 'Open VS Code', action: 'open_vscode', icon: '💻', colorKey: 'purple'},
+  // Browsers
+  {label: 'Open Chrome', action: 'open_chrome', icon: '🌐', color: Colors.amber},
+  {label: 'Open Firefox', action: 'open_firefox', icon: '🦊', color: Colors.orange},
+  {label: 'Open Edge', action: 'open_edge', icon: '🌊', color: Colors.blue},
+
+  // Editors & IDEs
+  {label: 'Open VS Code', action: 'open_vscode', icon: '💻', color: Colors.blue},
+  {label: 'Open Notepad', action: 'open_notepad', icon: '📝', color: Colors.cyan},
+  {label: 'Open Sublime Text', action: 'open_sublime', icon: '⚡', color: Colors.orange},
+  {label: 'Open PyCharm', action: 'open_pycharm', icon: '🐍', color: Colors.pink},
+
+  // Office & Utilities
+  {label: 'Open Terminal', action: 'open_terminal', icon: '🖥', color: Colors.pink},
+  {label: 'Open Calculator', action: 'open_calculator', icon: '🧮', color: Colors.cyan},
+  {label: 'Open File Manager', action: 'open_file_manager', icon: '📁', color: Colors.pink},
+  {label: 'Open Excel', action: 'open_excel', icon: '📊', color: Colors.green},
+  {label: 'Open Word', action: 'open_word', icon: '📄', color: Colors.blue},
+
+  // Media
+  {label: 'Open Spotify', action: 'open_spotify', icon: '🎵', color: Colors.green},
+  {label: 'Open VLC', action: 'open_vlc', icon: '🎬', color: Colors.orange},
 ];
 
 const POWER_COMMANDS: Command[] = [
-  {label: 'Lock Screen', action: 'lock_screen', icon: '🔒', colorKey: 'red'},
-  {label: 'Show Desktop', action: 'show_desktop', icon: '🖥', colorKey: 'orange'},
+  {label: 'Lock Screen', action: 'lock_screen', icon: '🔒', color: Colors.red},
+  {label: 'Show Desktop', action: 'show_desktop', icon: '🖥', color: Colors.amber},
 ];
 
 function CommandBtn({item, onPress}: {item: Command; onPress: () => void}) {
-  const color = item.colorKey ? (Colors as any)[item.colorKey] : Colors.pink;
+  const color = item.color ?? Colors.cyan;
   return (
     <TouchableOpacity
       style={[styles.cmdBtn, {borderColor: `${color}33`}]}

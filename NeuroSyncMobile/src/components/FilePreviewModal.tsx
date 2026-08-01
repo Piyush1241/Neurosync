@@ -82,7 +82,7 @@ export default function FilePreviewModal({ visible, filePath, deviceId, onClose 
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bgDark },
+  container: { flex: 1, backgroundColor: Colors.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -93,8 +93,8 @@ const s = StyleSheet.create({
     borderBottomColor: `${Colors.cyan}30`,
     backgroundColor: Colors.bgCard,
   },
-  title: { flex: 1, color: Colors.textPrimary, fontFamily: Fonts.heading, fontSize: 14, fontWeight: '700' },
-  closeBtn: { padding: Spacing.xs, backgroundColor: `${Colors.red}20`, borderRadius: Radius.xs, paddingHorizontal: 8 },
+  title: { flex: 1, color: Colors.textPrimary, fontFamily: Fonts.display, fontSize: 14, fontWeight: '700' },
+  closeBtn: { padding: Spacing.sm, backgroundColor: `${Colors.red}20`, borderRadius: Radius.sm, paddingHorizontal: 8 },
   closeText: { color: Colors.red, fontFamily: Fonts.ui, fontSize: 12, fontWeight: '700' },
   loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: Colors.cyan, fontFamily: Fonts.mono, fontSize: 12, marginTop: 12 },

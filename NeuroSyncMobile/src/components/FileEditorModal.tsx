@@ -111,7 +111,7 @@ export default function FileEditorModal({ visible, filePath, deviceId, onClose, 
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bgDark },
+  container: { flex: 1, backgroundColor: Colors.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -123,10 +123,10 @@ const s = StyleSheet.create({
     backgroundColor: Colors.bgCard,
   },
   closeBtn: { padding: Spacing.xs },
-  closeText: { color: Colors.textDim, fontFamily: Fonts.ui, fontSize: 14 },
+  closeText: { color: Colors.textSecondary, fontFamily: Fonts.ui, fontSize: 14 },
   titleContainer: { flex: 1, alignItems: 'center', marginHorizontal: Spacing.sm },
-  title: { color: Colors.textPrimary, fontFamily: Fonts.heading, fontSize: 14, fontWeight: '700' },
-  subTitle: { color: Colors.textDim, fontFamily: Fonts.mono, fontSize: 10 },
+  title: { color: Colors.textPrimary, fontFamily: Fonts.display, fontSize: 14, fontWeight: '700' },
+  subTitle: { color: Colors.textSecondary, fontFamily: Fonts.mono, fontSize: 10 },
   saveBtn: {
     backgroundColor: Colors.magenta,
     paddingHorizontal: Spacing.md,
@@ -143,6 +143,6 @@ const s = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 13,
     lineHeight: 20,
-    backgroundColor: Colors.bgDark,
+    backgroundColor: Colors.bg,
   },
 });

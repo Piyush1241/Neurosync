@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, Alert, SafeAreaView, Modal, ProgressViewIOS, Platform
+  View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView,
+  ActivityIndicator, Alert, SafeAreaView, Modal, Platform
 } from 'react-native';
 import { Colors, Fonts, Spacing, Radius } from '../theme';
 import { sendCommand } from '../services/commandService';
@@ -252,7 +252,7 @@ export default function FileExplorerScreen({ route, navigation }: any) {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bgDark },
+  container: { flex: 1, backgroundColor: Colors.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -265,7 +265,7 @@ const s = StyleSheet.create({
   },
   backBtn: { padding: Spacing.xs },
   backText: { color: Colors.cyan, fontFamily: Fonts.ui, fontSize: 14, fontWeight: '600' },
-  headerTitle: { color: Colors.textPrimary, fontFamily: Fonts.heading, fontSize: 15, fontWeight: '700' },
+  headerTitle: { color: Colors.textPrimary, fontFamily: Fonts.display, fontSize: 15, fontWeight: '700' },
   refreshBtn: { padding: Spacing.xs },
   refreshText: { fontSize: 16 },
   pathBar: {
@@ -281,7 +281,7 @@ const s = StyleSheet.create({
     backgroundColor: `${Colors.cyan}20`,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: Radius.xs,
+    borderRadius: Radius.sm,
     marginRight: 10,
   },
   upText: { color: Colors.cyan, fontFamily: Fonts.ui, fontSize: 11, fontWeight: '700' },
@@ -303,10 +303,10 @@ const s = StyleSheet.create({
   fileIcon: { fontSize: 22, marginRight: 12 },
   fileInfo: { flex: 1 },
   fileName: { color: Colors.textPrimary, fontFamily: Fonts.ui, fontSize: 13, fontWeight: '600' },
-  fileMeta: { color: Colors.textDim, fontFamily: Fonts.mono, fontSize: 10, marginTop: 2 },
-  arrowIcon: { color: Colors.textDim, fontSize: 18 },
+  fileMeta: { color: Colors.textSecondary, fontFamily: Fonts.mono, fontSize: 10, marginTop: 2 },
+  arrowIcon: { color: Colors.textSecondary, fontSize: 18 },
   emptyBox: { padding: 40, alignItems: 'center' },
-  emptyText: { color: Colors.textDim, fontFamily: Fonts.mono, fontSize: 12 },
+  emptyText: { color: Colors.textSecondary, fontFamily: Fonts.mono, fontSize: 12 },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.8)',
@@ -322,8 +322,8 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.magenta,
   },
-  actionTitle: { color: Colors.textPrimary, fontFamily: Fonts.heading, fontSize: 16, fontWeight: '700' },
-  actionMeta: { color: Colors.textDim, fontFamily: Fonts.mono, fontSize: 10, marginBottom: 16 },
+  actionTitle: { color: Colors.textPrimary, fontFamily: Fonts.display, fontSize: 16, fontWeight: '700' },
+  actionMeta: { color: Colors.textSecondary, fontFamily: Fonts.mono, fontSize: 10, marginBottom: 16 },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -345,9 +345,9 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.cyan,
   },
-  progressTitle: { color: Colors.textPrimary, fontFamily: Fonts.heading, fontSize: 14, fontWeight: '700', marginTop: 12 },
-  progressSub: { color: Colors.textDim, fontFamily: Fonts.mono, fontSize: 10, marginVertical: 8, textAlign: 'center' },
-  progressBg: { width: '100%', height: 6, backgroundColor: Colors.bgDark, borderRadius: 3, overflow: 'hidden' },
+  progressTitle: { color: Colors.textPrimary, fontFamily: Fonts.display, fontSize: 14, fontWeight: '700', marginTop: 12 },
+  progressSub: { color: Colors.textSecondary, fontFamily: Fonts.mono, fontSize: 10, marginVertical: 8, textAlign: 'center' },
+  progressBg: { width: '100%', height: 6, backgroundColor: Colors.bg, borderRadius: 3, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: Colors.magenta },
   progressPct: { color: Colors.cyan, fontFamily: Fonts.mono, fontSize: 12, marginTop: 8, fontWeight: '700' },
 });

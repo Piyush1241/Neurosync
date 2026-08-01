@@ -9,10 +9,48 @@ let agentProcess;
 let statsProcess;
 let authToken = null;
 
-const customPython = '/Library/Frameworks/Python.framework/Versions/3.12/bin/python3';
-const pythonExe = process.platform === 'win32'
-  ? 'python'
-  : (fs.existsSync(customPython) ? customPython : 'python3');
+function getPythonExecutable() {
+  if (process.platform === 'win32') {
+    const localAppData = process.env.LOCALAPPDATA || '';
+    const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
+    const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+
+    const candidates = [
+      'python',
+      'python3',
+      'py',
+      path.join(localAppData, 'Programs', 'Python', 'Python312', 'python.exe'),
+      path.join(localAppData, 'Programs', 'Python', 'Python311', 'python.exe'),
+      path.join(localAppData, 'Programs', 'Python', 'Python310', 'python.exe'),
+      path.join(localAppData, 'Programs', 'Python', 'Python39', 'python.exe'),
+      path.join(programFiles, 'Python312', 'python.exe'),
+      path.join(programFiles, 'Python311', 'python.exe'),
+      path.join(programFiles, 'Python310', 'python.exe'),
+      path.join(programFiles, 'Python39', 'python.exe'),
+      path.join(programFilesX86, 'Python312', 'python.exe'),
+      'C:\\Python312\\python.exe',
+      'C:\\Python311\\python.exe',
+      'C:\\Python310\\python.exe',
+      'C:\\Python39\\python.exe',
+    ];
+
+    for (const cand of candidates) {
+      if (!cand.includes('\\') && !cand.includes('/')) {
+        // Simple command name, assume PATH lookup
+        return cand;
+      }
+      if (fs.existsSync(cand)) {
+        return cand;
+      }
+    }
+    return 'python';
+  } else {
+    const customPython = '/Library/Frameworks/Python.framework/Versions/3.12/bin/python3';
+    return fs.existsSync(customPython) ? customPython : 'python3';
+  }
+}
+
+const pythonExe = getPythonExecutable();
 
 const https = require('https');
 

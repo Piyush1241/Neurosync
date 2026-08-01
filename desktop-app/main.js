@@ -1,8 +1,18 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, MenuItem } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const http = require('http');
+
+app.on('web-contents-created', (event, contents) => {
+  contents.on('context-menu', (e, params) => {
+    if (params.selectionText && params.selectionText.trim().length > 0) {
+      const menu = new Menu();
+      menu.append(new MenuItem({ label: 'Copy', role: 'copy' }));
+      menu.popup({ window: BrowserWindow.fromWebContents(contents) });
+    }
+  });
+});
 
 let mainWindow;
 let agentProcess;

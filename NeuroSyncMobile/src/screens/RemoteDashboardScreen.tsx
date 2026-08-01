@@ -28,7 +28,6 @@ const LAUNCH_COMMANDS: Command[] = [
   // Office & Utilities
   {label: 'Open Terminal', action: 'open_terminal', icon: '🖥', color: Colors.pink},
   {label: 'Open Calculator', action: 'open_calculator', icon: '🧮', color: Colors.cyan},
-  {label: 'Open File Manager', action: 'open_file_manager', icon: '📁', color: Colors.pink},
   {label: 'Open Excel', action: 'open_excel', icon: '📊', color: Colors.green},
   {label: 'Open Word', action: 'open_word', icon: '📄', color: Colors.blue},
 

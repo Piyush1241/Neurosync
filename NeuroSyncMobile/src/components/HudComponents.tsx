@@ -43,28 +43,16 @@ function cornerStyles(color: string) {
 }
 
 // ── Scanline overlay ────────────────────────────────────────
-// Lightweight — just a subtle opacity stripe on top of content
 export function ScanlineOverlay() {
-  return (
-    <View style={scanStyles.overlay} pointerEvents="none">
-      {Array.from({ length: 60 }).map((_, i) => (
-        <View key={i} style={scanStyles.line} />
-      ))}
-    </View>
-  );
+  return <View style={scanStyles.overlay} pointerEvents="none" />;
 }
 
 const scanStyles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    flexDirection: 'column',
+    backgroundColor: 'rgba(0,0,0,0.02)',
     pointerEvents: 'none',
     zIndex: 999,
-  },
-  line: {
-    flex: 1,
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(0,255,255,0.025)',
   },
 });
 

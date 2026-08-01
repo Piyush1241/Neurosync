@@ -17,8 +17,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onStatsUpdate: (cb) => ipcRenderer.on('stats-update', (_, d) => cb(d)),
 
   // File Manager
-  listFiles:    (path) => ipcRenderer.invoke('file-list', path),
-  createFolder: (path) => ipcRenderer.invoke('file-create-folder', path),
-  deleteItem:   (path) => ipcRenderer.invoke('file-delete', path),
-  renameItem:   (oldPath, newPath) => ipcRenderer.invoke('file-rename', oldPath, newPath),
+  listFiles:          (path) => ipcRenderer.invoke('file-list', path),
+  createFolder:       (path) => ipcRenderer.invoke('file-create-folder', path),
+  deleteItem:         (path) => ipcRenderer.invoke('file-delete', path),
+  renameItem:         (oldPath, newPath) => ipcRenderer.invoke('file-rename', oldPath, newPath),
+  openSystemExplorer: (path) => ipcRenderer.invoke('open-system-explorer', path),
 });

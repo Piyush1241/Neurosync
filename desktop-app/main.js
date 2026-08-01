@@ -412,3 +412,14 @@ ipcMain.handle('file-rename', async (_, oldPath, newPath) => {
     return { status: 'error', message: err.message };
   }
 });
+
+ipcMain.handle('open-system-explorer', async (_, targetPath) => {
+  try {
+    const target = (!targetPath || targetPath === '~') ? os.homedir() : targetPath.replace(/^~/, os.homedir());
+    const { shell } = require('electron');
+    await shell.openPath(target);
+    return { status: 'success' };
+  } catch (err) {
+    return { status: 'error', message: err.message };
+  }
+});

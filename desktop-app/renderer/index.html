@@ -496,9 +496,9 @@
 
     <div class="section-label" style="margin-top: 24px;">FILE MANAGER</div>
     <div style="background: var(--bg-elevated); border: 1px solid var(--cyan-border); border-radius: 12px; padding: 14px;">
-      <div style="font-family: var(--font-ui); font-size: 10px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 8px;">LOCAL FILESYSTEM</div>
-      <button onclick="openDesktopFileManager()" style="width: 100%; background: linear-gradient(135deg, rgba(252,31,249,0.2), rgba(0,229,255,0.2)); border: 1px solid var(--pink-border); color: var(--pink); font-family: var(--font-ui); font-size: 11px; font-weight: 700; padding: 10px; border-radius: 8px; cursor: pointer; letter-spacing: 1.5px; transition: all 0.2s;">
-        📁 OPEN FILE EXPLORER
+      <div style="font-family: var(--font-ui); font-size: 10px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 8px;">SYSTEM FILESYSTEM</div>
+      <button onclick="openSystemFileExplorer()" style="width: 100%; background: linear-gradient(135deg, rgba(252,31,249,0.2), rgba(0,229,255,0.2)); border: 1px solid var(--pink-border); color: var(--pink); font-family: var(--font-ui); font-size: 11px; font-weight: 700; padding: 10px; border-radius: 8px; cursor: pointer; letter-spacing: 1.5px; transition: all 0.2s;">
+        📁 OPEN FINDER / EXPLORER
       </button>
     </div>
   </div>
@@ -535,6 +535,9 @@
 
 <script>
 let currentFmPath = '~';
+async function openSystemFileExplorer(path) {
+  await window.electronAPI.openSystemExplorer(path || currentFmPath);
+}
 async function openDesktopFileManager() {
   document.getElementById('fm-modal').style.display = 'flex';
   await loadFmPath(currentFmPath);

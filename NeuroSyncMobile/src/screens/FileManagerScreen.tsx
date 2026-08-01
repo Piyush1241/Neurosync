@@ -4,8 +4,8 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, Alert, StatusBar, ActivityIndicator,
   TextInput, Modal,
-} from 'react-native';
 import {api} from '../services/apiClient';
+import {Colors, Fonts, Radius, Spacing} from '../theme';
 
 interface FileItem {
   name: string;

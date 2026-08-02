@@ -388,24 +388,40 @@ class KeyboardController:
 
     @staticmethod
     def _capture_screen_pil():
-        """Capture screen across Windows (with GDI fallback), macOS, and Linux."""
+        """Capture screen across Windows (with input desktop attachment), macOS, and Linux."""
         import platform
         sys_name = platform.system()
         
-        # 1. Try PyAutoGUI / ImageGrab first
-        try:
-            return pyautogui.screenshot()
-        except Exception:
-            pass
+        # On Windows, attach current thread to active interactive input desktop
+        if sys_name == "Windows":
+            try:
+                import ctypes
+                user32 = ctypes.windll.user32
+                # DESKTOP_READOBJECTS (0x0001) | DESKTOP_WRITEOBJECTS (0x0080) | DESKTOP_SWITCHDESKTOP (0x0100)
+                h_desktop = user32.OpenInputDesktop(0, False, 0x0100 | 0x0080 | 0x0001)
+                if h_desktop:
+                    user32.SetThreadDesktop(h_desktop)
+            except Exception:
+                pass
 
-        # 2. Try PIL ImageGrab directly
+        # 1. Try PIL ImageGrab directly
         try:
             from PIL import ImageGrab
-            return ImageGrab.grab()
+            img = ImageGrab.grab()
+            if img and img.getextrema() != ((0, 0), (0, 0), (0, 0)):
+                return img
         except Exception:
             pass
 
-        # 3. Windows Native GDI fallback (handles DPI awareness and layered windows)
+        # 2. Try PyAutoGUI
+        try:
+            img = pyautogui.screenshot()
+            if img and img.getextrema() != ((0, 0), (0, 0), (0, 0)):
+                return img
+        except Exception:
+            pass
+
+        # 3. Windows Native GDI fallback with BGRX decoding
         if sys_name == "Windows":
             try:
                 import ctypes
@@ -427,8 +443,8 @@ class KeyboardController:
                 hbmp = gdi32.CreateCompatibleBitmap(hdc_src, w, h)
                 gdi32.SelectObject(hdc_mem, hbmp)
 
-                # SRCCOPY = 0x00CC0020
-                gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_src, 0, 0, 0x00CC0020)
+                # CAPTUREBLT (0x40000000) | SRCCOPY (0x00CC0020) = 0x40CC0020
+                gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_src, 0, 0, 0x40CC0020)
 
                 class BITMAPINFOHEADER(ctypes.Structure):
                     _fields_ = [
@@ -456,7 +472,8 @@ class KeyboardController:
                 buf = ctypes.create_string_buffer(w * h * 4)
                 gdi32.GetDIBits(hdc_mem, hbmp, 0, h, buf, ctypes.byref(bmi), 0)
 
-                img = Image.frombuffer('RGBA', (w, h), buf, 'raw', 'BGRA', 0, 1)
+                # Decode as RGB from BGRX to avoid zero-alpha transparency issues
+                img = Image.frombuffer('RGB', (w, h), buf, 'raw', 'BGRX', 0, 1)
 
                 gdi32.DeleteObject(hbmp)
                 gdi32.DeleteDC(hdc_mem)

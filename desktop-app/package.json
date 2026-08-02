@@ -23,16 +23,30 @@
       {
         "from": "../desktop-agent",
         "to": "desktop-agent",
-        "filter": ["**/*"]
+        "filter": ["**/*", "!**/__pycache__/*", "!**/*.pyc", "!**/*.dylib", "!**/*.so"]
       },
       {
         "from": "python-embed",
         "to": "python",
-        "filter": ["**/*"]
+        "filter": ["**/*", "!**/__pycache__/*", "!**/*.pyc", "!**/*.dylib", "!**/*.so"]
       }
     ],
     "mac": { "target": "dmg" },
-    "win": { "target": "nsis" }
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "differentialPackage": false
+    }
   },
   "devDependencies": {
     "electron": "^28.0.0",

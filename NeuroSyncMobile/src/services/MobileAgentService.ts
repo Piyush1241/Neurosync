@@ -125,89 +125,46 @@ class MobileAgentService {
   }
 
   private async listDir(dirPath: string) {
-    const isRoot = !dirPath || dirPath === '~' || dirPath === '/' || dirPath === 'ROOT' || dirPath.includes('Device Storage');
-
+    const extStorage = RNFS.ExternalStorageDirectoryPath; // /storage/emulated/0 on Android
     const docPath = RNFS.DocumentDirectoryPath;
-    const downloadsPath = `${docPath}/Downloads`;
-    const picturesPath = `${docPath}/Pictures`;
+    const isAndroidExt = Platform.OS === 'android' && extStorage;
+    const baseStorage = isAndroidExt ? extStorage : docPath;
 
-    try { await RNFS.mkdir(downloadsPath); } catch {}
-    try { await RNFS.mkdir(picturesPath); } catch {}
-
-    // Ensure welcome sample files exist for immediate testing & transfer
-    const sampleFile = `${docPath}/NeuroSync_Notes.txt`;
-    const sampleDownload = `${downloadsPath}/Welcome_Download_File.txt`;
-    if (!(await RNFS.exists(sampleFile))) {
-      try { await RNFS.writeFile(sampleFile, 'Welcome to NeuroSync Remote File Sharing!\nThis file is synced across your devices.', 'utf8'); } catch {}
-    }
-    if (!(await RNFS.exists(sampleDownload))) {
-      try { await RNFS.writeFile(sampleDownload, 'NeuroSync Mobile Download Folder\nYou can read, write, and transfer files here remotely.', 'utf8'); } catch {}
-    }
-
-    if (isRoot) {
-      const rootEntries: any[] = [
-        { name: 'Documents', path: '~/Documents', type: 'folder', size: '—', modified: Date.now(), extension: '' },
-        { name: 'Downloads', path: '~/Downloads', type: 'folder', size: '—', modified: Date.now(), extension: '' },
-        { name: 'Pictures', path: '~/Pictures', type: 'folder', size: '—', modified: Date.now(), extension: '' },
-      ];
-
-      if (RNFS.CachesDirectoryPath) {
-        rootEntries.push({ name: 'App Caches', path: '~/Caches', type: 'folder', size: '—', modified: Date.now(), extension: '' });
-      }
-
-      // Also read top-level files in docPath to include in root list
-      try {
-        const topItems = await RNFS.readDir(docPath);
-        for (const item of topItems) {
-          if (!item.isDirectory() && item.name !== 'Downloads' && item.name !== 'Pictures') {
-            rootEntries.push({
-              name: item.name,
-              path: item.path,
-              type: 'file',
-              size: this.formatSize(item.size),
-              size_bytes: item.size,
-              modified: item.mtime?.getTime() || Date.now(),
-              extension: item.name.includes('.') ? `.${item.name.split('.').pop()}` : ''
-            });
-          }
-        }
-      } catch {}
-
-      return {
-        status: 'success',
-        current_path: docPath,
-        display_path: '~',
-        parent_path: '~',
-        entries: rootEntries
-      };
-    }
+    const isRoot = !dirPath || dirPath === '~' || dirPath === '/' || dirPath === 'ROOT' || dirPath.includes('Device Storage');
 
     let targetPath = dirPath;
     let displayPath = dirPath;
 
-    if (dirPath === 'Documents' || dirPath === '~/Documents' || dirPath === docPath) {
-      targetPath = docPath;
+    if (isRoot) {
+      targetPath = baseStorage;
+      displayPath = '~';
+    } else if (dirPath === 'Documents' || dirPath === '~/Documents' || dirPath === docPath) {
+      targetPath = isAndroidExt ? `${extStorage}/Documents` : docPath;
       displayPath = '~/Documents';
-    } else if (dirPath === 'Downloads' || dirPath === '~/Downloads' || dirPath === downloadsPath || dirPath.endsWith('/Downloads')) {
-      targetPath = downloadsPath;
+    } else if (dirPath === 'Downloads' || dirPath === '~/Downloads' || dirPath.endsWith('/Downloads') || dirPath.endsWith('/Download')) {
+      targetPath = isAndroidExt ? `${extStorage}/Download` : `${docPath}/Downloads`;
       displayPath = '~/Downloads';
-    } else if (dirPath === 'Pictures' || dirPath === '~/Pictures' || dirPath === picturesPath || dirPath.endsWith('/Pictures')) {
-      targetPath = picturesPath;
+    } else if (dirPath === 'Pictures' || dirPath === '~/Pictures' || dirPath === 'DCIM' || dirPath === '~/DCIM') {
+      targetPath = isAndroidExt ? `${extStorage}/DCIM` : `${docPath}/Pictures`;
       displayPath = '~/Pictures';
-    } else if (dirPath === 'Caches' || dirPath === '~/Caches' || dirPath === RNFS.CachesDirectoryPath) {
-      targetPath = RNFS.CachesDirectoryPath || docPath;
-      displayPath = '~/Caches';
     } else if (dirPath === 'Desktop' || dirPath === '~/Desktop') {
-      targetPath = docPath;
+      targetPath = isAndroidExt ? `${extStorage}/Desktop` : docPath;
       displayPath = '~/Desktop';
-    } else if (dirPath.startsWith(docPath)) {
-      const rel = dirPath.substring(docPath.length);
-      displayPath = `~${rel}`;
+    } else if (dirPath.startsWith('~')) {
+      const rel = dirPath.substring(1);
+      targetPath = `${baseStorage}${rel}`;
+      displayPath = dirPath;
+    } else if (dirPath.startsWith(baseStorage)) {
+      const rel = dirPath.substring(baseStorage.length);
+      displayPath = rel ? `~${rel}` : '~';
     }
 
-    if (!(await RNFS.exists(targetPath))) {
-      return { status: 'error', message: 'Directory not found' };
-    }
+    // Ensure directory exists if it's a standard subfolder
+    try {
+      if (!(await RNFS.exists(targetPath))) {
+        await RNFS.mkdir(targetPath);
+      }
+    } catch {}
 
     let items: any[] = [];
     try {
@@ -218,21 +175,26 @@ class MobileAgentService {
 
     const entries = items.map(item => ({
       name: item.name,
-      path: item.path,
+      path: item.path.startsWith(baseStorage) ? `~${item.path.substring(baseStorage.length)}` : item.path,
       type: item.isDirectory() ? 'folder' : 'file',
       size: item.isDirectory() ? '—' : this.formatSize(item.size),
       size_bytes: item.size,
-      modified: item.mtime?.getTime() || 0,
+      modified: item.mtime?.getTime() || Date.now(),
       extension: item.name.includes('.') ? `.${item.name.split('.').pop()}` : ''
     }));
 
+    // Sort: folders first, then alphabetical
     entries.sort((a, b) => {
       if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
 
-    const isTopDoc = targetPath === docPath || targetPath === downloadsPath || targetPath === picturesPath;
-    const parentPath = isTopDoc ? '~' : (targetPath.substring(0, targetPath.lastIndexOf('/')) || '~');
+    const isTop = targetPath === baseStorage || displayPath === '~';
+    let parentPath = '~';
+    if (!isTop) {
+      const lastSlash = displayPath.lastIndexOf('/');
+      parentPath = lastSlash > 0 ? displayPath.substring(0, lastSlash) : '~';
+    }
 
     return {
       status: 'success',

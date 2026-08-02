@@ -489,3 +489,67 @@ class AppLauncher:
             return {"status": "success", "windows": windows}
         except Exception as e:
             return {"status": "error", "message": str(e)}
+
+    @classmethod
+    def focus_window(cls, app_name: str) -> dict:
+        """Bring target application window to front cross-platform (Windows, macOS, Linux)."""
+        sys_name = cls._system()
+        target = app_name.lower().strip()
+        if not target:
+            return {"status": "error", "message": "No application name provided"}
+
+        try:
+            if sys_name == "Windows":
+                # Try pygetwindow first
+                try:
+                    import pygetwindow as gw
+                    matching = [w for w in gw.getAllWindows() if target in w.title.lower()]
+                    if matching:
+                        w = matching[0]
+                        if w.isMinimized:
+                            w.restore()
+                        w.activate()
+                        return {"status": "success", "action": "focus_window", "title": w.title}
+                except Exception:
+                    pass
+
+                # Fallback to Win32 API
+                import ctypes
+                user32 = ctypes.windll.user32
+                found = []
+
+                def enum_handler(hwnd, extra):
+                    if user32.IsWindowVisible(hwnd):
+                        length = user32.GetWindowTextLengthW(hwnd)
+                        if length > 0:
+                            buff = ctypes.create_unicode_buffer(length + 1)
+                            user32.GetWindowTextW(hwnd, buff, length + 1)
+                            title = buff.value
+                            if target in title.lower():
+                                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                                user32.SetForegroundWindow(hwnd)
+                                extra.append(title)
+                    return True
+
+                WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+                user32.EnumWindows(WNDENUMPROC(enum_handler), ctypes.py_object(found))
+
+                if found:
+                    return {"status": "success", "action": "focus_window", "title": found[0]}
+                return {"status": "error", "message": f"Window matching '{app_name}' not found"}
+
+            elif sys_name == "Darwin":
+                script = f'tell application "{app_name}" to activate'
+                res = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+                if res.returncode == 0:
+                    return {"status": "success", "action": "focus_window", "app": app_name}
+                subprocess.run(['open', '-a', app_name])
+                return {"status": "success", "action": "focus_window", "app": app_name}
+
+            elif sys_name == "Linux":
+                subprocess.run(['wmctrl', '-a', app_name])
+                return {"status": "success", "action": "focus_window", "app": app_name}
+
+            return {"status": "error", "message": f"Unsupported OS: {sys_name}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}

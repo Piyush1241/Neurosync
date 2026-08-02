@@ -46,6 +46,7 @@ _REGISTRY: dict[str, dict] = {
     "restart_system":        {"fn": lambda c: AppLauncher.restart_system()},
     "sleep_system":          {"fn": lambda c: AppLauncher.sleep_system()},
     "get_windows":           {"fn": lambda c: AppLauncher.get_windows()},
+    "focus_window":          {"fn": lambda c: AppLauncher.focus_window(c.get("app_name", c.get("window", "")))},
     "is_app_running":        {"fn": lambda c: AppLauncher.is_running(c["label"]), "required": ["label"]},
 
     # ── Mouse ──

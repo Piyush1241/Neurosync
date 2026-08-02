@@ -205,19 +205,32 @@ class MobileAgentService {
     };
   }
 
+  private getAbsolutePath(filePath: string): string {
+    const extStorage = RNFS.ExternalStorageDirectoryPath;
+    const docPath = RNFS.DocumentDirectoryPath;
+    const isAndroidExt = Platform.OS === 'android' && extStorage;
+    const baseStorage = isAndroidExt ? extStorage : docPath;
+
+    if (!filePath || filePath === '~') return baseStorage;
+    if (filePath.startsWith('~')) return `${baseStorage}${filePath.substring(1)}`;
+    return filePath;
+  }
+
   private async readText(filePath: string) {
-    if (!(await RNFS.exists(filePath))) return { status: 'error', message: 'File not found' };
-    const content = await RNFS.readFile(filePath, 'utf8');
+    const target = this.getAbsolutePath(filePath);
+    if (!(await RNFS.exists(target))) return { status: 'error', message: 'File not found' };
+    const content = await RNFS.readFile(target, 'utf8');
     return { status: 'success', content };
   }
 
   private async saveText(filePath: string, content: string) {
-    await RNFS.writeFile(filePath, content, 'utf8');
+    const target = this.getAbsolutePath(filePath);
+    await RNFS.writeFile(target, content, 'utf8');
     return { status: 'success' };
   }
 
   private async readChunk(filePath: string, chunkIndex: number) {
-    const target = filePath === '~' ? RNFS.DocumentDirectoryPath : filePath;
+    const target = this.getAbsolutePath(filePath);
     if (!(await RNFS.exists(target))) return { status: 'error', message: 'File not found' };
 
     const stat = await RNFS.stat(target);

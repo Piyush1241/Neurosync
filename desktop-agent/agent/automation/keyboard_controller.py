@@ -23,14 +23,56 @@ class KeyboardController:
             return {"status": "error", "message": "text must be a string"}
         try:
             sys_name = platform.system()
-            original = pyperclip.paste()
-            pyperclip.copy(text)
+            time.sleep(0.3)  # Ensure active window focus
+            
             if sys_name == "Darwin":
-                pyautogui.hotkey("command", "v")
-            else:
-                pyautogui.hotkey("ctrl", "v")
-            time.sleep(0.05)
-            pyperclip.copy(original)
+                import subprocess
+                clean_text = text.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                
+                # 1. Direct TextEdit document insertion if TextEdit is active/running
+                try:
+                    script = (
+                        f'tell application "TextEdit"\n'
+                        f'  if running then\n'
+                        f'    activate\n'
+                        f'    if (count of documents) is 0 then make new document\n'
+                        f'    set current_text to text of document 1\n'
+                        f'    if current_text is "" then\n'
+                        f'      set text of document 1 to "{clean_text}"\n'
+                        f'    else\n'
+                        f'      set text of document 1 to (current_text & return & "{clean_text}")\n'
+                        f'    end if\n'
+                        f'    return "OK"\n'
+                        f'  end if\n'
+                        f'end tell'
+                    )
+                    res = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+                    if res.returncode == 0 and "OK" in res.stdout:
+                        return {"status": "success", "typed": text, "length": len(text)}
+                except Exception as ex:
+                    logger.debug(f"TextEdit direct AppleScript bypass skipped: {ex}")
+
+                # 2. System Events keystroke
+                escaped = text.replace('\\', '\\\\').replace('"', '\\"')
+                cmd = f'osascript -e \'tell application "System Events" to keystroke "{escaped}"\''
+                res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                if res.returncode == 0:
+                    return {"status": "success", "typed": text, "length": len(text)}
+                elif "not allowed to send keystrokes" in res.stderr or "1002" in res.stderr:
+                    logger.error("macOS Accessibility Permission Required! Please re-add NeuroSync under System Settings > Privacy & Security > Accessibility.")
+
+            # 3. Fallback for Windows/Linux or general apps
+            try:
+                original = pyperclip.paste()
+                pyperclip.copy(text)
+                if sys_name == "Darwin":
+                    pyautogui.hotkey("command", "v")
+                else:
+                    pyautogui.hotkey("ctrl", "v")
+                time.sleep(0.1)
+                pyperclip.copy(original)
+            except Exception:
+                pyautogui.write(text, interval=interval)
             return {"status": "success", "typed": text, "length": len(text)}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -55,15 +97,75 @@ class KeyboardController:
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
+    MAC_KEY_CODES = {
+        'enter': 36, 'return': 36,
+        'esc': 53, 'escape': 53,
+        'tab': 48,
+        'space': 49,
+        'backspace': 51,
+        'delete': 117,
+        'up': 126, 'down': 125, 'left': 123, 'right': 124,
+        'win': 55, 'command': 55, 'cmd': 55,
+        'option': 58, 'alt': 58,
+        'ctrl': 59, 'control': 59,
+        'shift': 56
+    }
+
+    @staticmethod
+    def _mac_press_key(key: str) -> bool:
+        if platform.system() == "Darwin":
+            import subprocess
+            k_lower = key.lower()
+            if k_lower in KeyboardController.MAC_KEY_CODES:
+                code = KeyboardController.MAC_KEY_CODES[k_lower]
+                script = f'tell application "System Events" to key code {code}'
+                res = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+                return res.returncode == 0
+        return False
+
+    @staticmethod
+    def _mac_hotkey(keys: list[str]) -> bool:
+        if platform.system() == "Darwin":
+            import subprocess
+            mods = []
+            char_key = None
+            for k in keys:
+                kl = k.lower()
+                if kl in ('command', 'cmd', 'win', 'super', 'meta'):
+                    mods.append('command down')
+                elif kl in ('ctrl', 'control'):
+                    mods.append('control down')
+                elif kl in ('alt', 'option'):
+                    mods.append('option down')
+                elif kl == 'shift':
+                    mods.append('shift down')
+                else:
+                    char_key = kl
+
+            if char_key:
+                mod_str = " using {" + ", ".join(mods) + "}" if mods else ""
+                script = f'tell application "System Events" to keystroke "{char_key}"{mod_str}'
+                res = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+                return res.returncode == 0
+        return False
+
     # ── Single keys ───────────────────────────────────────────────
 
     @staticmethod
     def press_key(key: str) -> dict:
         """Press and release a single key."""
-        if key not in VALID_KEYS:
+        key_str = str(key).lower()
+        if platform.system() == "Darwin":
+            if key_str in ("win", "windows", "super", "meta"):
+                key_str = "command"
+            if KeyboardController._mac_press_key(key_str):
+                return {"status": "success", "key": key}
+
+        valid_k = "command" if key_str in ("win", "cmd") else key_str
+        if valid_k not in VALID_KEYS and key_str not in VALID_KEYS:
             return {"status": "error", "message": f"Invalid key: '{key}'. See pyautogui.KEYBOARD_KEYS"}
         try:
-            pyautogui.press(key)
+            pyautogui.press(valid_k if valid_k in VALID_KEYS else key_str)
             return {"status": "success", "key": key}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -71,10 +173,11 @@ class KeyboardController:
     @staticmethod
     def key_down(key: str) -> dict:
         """Hold a key down (does not release)."""
-        if key not in VALID_KEYS:
+        valid_k = "command" if str(key).lower() in ("win", "cmd") else key
+        if valid_k not in VALID_KEYS:
             return {"status": "error", "message": f"Invalid key: '{key}'"}
         try:
-            pyautogui.keyDown(key)
+            pyautogui.keyDown(valid_k)
             return {"status": "success", "key": key, "held": True}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -82,10 +185,11 @@ class KeyboardController:
     @staticmethod
     def key_up(key: str) -> dict:
         """Release a held key."""
-        if key not in VALID_KEYS:
+        valid_k = "command" if str(key).lower() in ("win", "cmd") else key
+        if valid_k not in VALID_KEYS:
             return {"status": "error", "message": f"Invalid key: '{key}'"}
         try:
-            pyautogui.keyUp(key)
+            pyautogui.keyUp(valid_k)
             return {"status": "success", "key": key, "held": False}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -93,24 +197,44 @@ class KeyboardController:
     @staticmethod
     def press_key_times(key: str, count: int, interval: float = 0.1) -> dict:
         """Press a key multiple times with an interval."""
-        if key not in VALID_KEYS:
-            return {"status": "error", "message": f"Invalid key: '{key}'"}
-        try:
-            pyautogui.press(key, presses=count, interval=interval)
-            return {"status": "success", "key": key, "presses": count}
-        except Exception as e:
-            return {"status": "error", "message": str(e)}
+        for _ in range(count):
+            r = KeyboardController.press_key(key)
+            if r.get("status") == "error":
+                return r
+            time.sleep(interval)
+        return {"status": "success", "key": key, "presses": count}
 
     # ── Hotkeys / combos ──────────────────────────────────────────
 
     @staticmethod
     def hotkey(*keys: str) -> dict:
         """Press a key combination simultaneously. e.g. hotkey('ctrl', 'shift', 'esc')"""
-        invalid = [k for k in keys if k not in VALID_KEYS]
+        sys_name = platform.system()
+        keys_list = [str(k).lower() for k in keys]
+
+        if sys_name == "Darwin":
+            if any(k in ("alt", "option") for k in keys_list) and "f4" in keys_list:
+                return KeyboardController.close_window()
+
+        translated_keys = []
+        for k in keys_list:
+            if sys_name == "Darwin":
+                if k in ("ctrl", "control", "win", "windows", "super", "meta"):
+                    translated_keys.append("command")
+                else:
+                    translated_keys.append(k)
+            else:
+                translated_keys.append(k)
+
+        if sys_name == "Darwin":
+            if KeyboardController._mac_hotkey(translated_keys):
+                return {"status": "success", "keys": list(keys)}
+
+        invalid = [k for k in translated_keys if k not in VALID_KEYS and k not in ("command", "cmd")]
         if invalid:
             return {"status": "error", "message": f"Invalid keys: {invalid}"}
         try:
-            pyautogui.hotkey(*keys)
+            pyautogui.hotkey(*translated_keys)
             return {"status": "success", "keys": list(keys)}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -120,49 +244,45 @@ class KeyboardController:
     @staticmethod
     def copy() -> dict:
         try:
-            pyautogui.hotkey("ctrl", "c")
-            time.sleep(0.1)
-            return {"status": "success", "action": "copy"}
+            return KeyboardController.hotkey("ctrl", "c")
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
     @staticmethod
     def paste() -> dict:
         try:
-            pyautogui.hotkey("ctrl", "v")
-            return {"status": "success", "action": "paste"}
+            return KeyboardController.hotkey("ctrl", "v")
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
     @staticmethod
     def cut() -> dict:
         try:
-            pyautogui.hotkey("ctrl", "x")
-            return {"status": "success", "action": "cut"}
+            return KeyboardController.hotkey("ctrl", "x")
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
     @staticmethod
     def select_all() -> dict:
         try:
-            pyautogui.hotkey("ctrl", "a")
-            return {"status": "success", "action": "select_all"}
+            return KeyboardController.hotkey("ctrl", "a")
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
     @staticmethod
     def undo() -> dict:
         try:
-            pyautogui.hotkey("ctrl", "z")
-            return {"status": "success", "action": "undo"}
+            return KeyboardController.hotkey("ctrl", "z")
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
     @staticmethod
     def redo() -> dict:
         try:
-            pyautogui.hotkey("ctrl", "y")
-            return {"status": "success", "action": "redo"}
+            sys_name = platform.system()
+            if sys_name == "Darwin":
+                return KeyboardController.hotkey("command", "shift", "z")
+            return KeyboardController.hotkey("ctrl", "y")
         except Exception as e:
             return {"status": "error", "message": str(e)}
 

@@ -370,6 +370,14 @@
       <span id="status-text">CONNECTED</span>
     </div>
 
+    <div class="section-label">NAVIGATION</div>
+    <div class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')" style="font-family: var(--font-ui); font-size: 11px; font-weight: 600; padding: 10px 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; color: var(--pink); border: 1px solid var(--pink-glow); background: rgba(252, 31, 249, 0.05); transition: all 0.2s;">
+      <span style="letter-spacing: 2px;">❖ DASHBOARD</span>
+    </div>
+    <div class="nav-item" id="nav-files" onclick="switchTab('files')" style="font-family: var(--font-ui); font-size: 11px; font-weight: 600; padding: 10px 12px; margin-bottom: 20px; border-radius: 8px; cursor: pointer; color: var(--text-dim); transition: all 0.2s;">
+      <span style="letter-spacing: 2px;">📁 REMOTE FILES</span>
+    </div>
+
     <div class="section-label">SYSTEM METRICS</div>
 
     <div class="gauge-row">
@@ -505,6 +513,18 @@
     </div>
   </div>
 
+  <!-- FILE EXPLORER (Hidden by default) -->
+  <div class="panel" id="view-files" style="grid-column: 2 / 4; grid-row: 1 / 3; display: none; flex-direction: column;">
+    <div class="section-label">REMOTE FILE EXPLORER</div>
+    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+      <input type="text" id="file-path-input" value="~" style="flex: 1; background: var(--bg); border: 1px solid var(--cyan-border); color: var(--text); font-family: var(--font-mono); padding: 8px 12px; border-radius: 8px;" />
+      <button onclick="loadRemoteFiles()" style="background: var(--pink-glow); border: 1px solid var(--pink); color: var(--pink); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: var(--font-ui); font-weight: 600; transition: all 0.2s;">GO</button>
+    </div>
+    <div id="file-list" style="flex: 1; overflow-y: auto; background: var(--bg); border: 1px solid var(--cyan-border); border-radius: 8px; padding: 12px;">
+      <div style="color: var(--text-dim); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Enter a device ID and path to browse</div>
+    </div>
+  </div>
+
   <!-- LOG -->
   <div id="log">
     <div class="section-label" style="display: flex; justify-content: space-between; align-items: center;">
@@ -517,6 +537,249 @@
 </div>
 
 <script>
+// --- Navigation ---
+function switchTab(tab) {
+  const isDash = tab === 'dashboard';
+  document.getElementById('main').style.display = isDash ? 'grid' : 'none';
+  document.getElementById('right').style.display = isDash ? 'block' : 'none';
+  document.getElementById('log').style.display = isDash ? 'block' : 'none';
+  document.getElementById('view-files').style.display = isDash ? 'none' : 'flex';
+
+  const navDash = document.getElementById('nav-dashboard');
+  const navFiles = document.getElementById('nav-files');
+
+  if (isDash) {
+    navDash.style.color = 'var(--pink)';
+    navDash.style.border = '1px solid var(--pink-glow)';
+    navDash.style.background = 'rgba(252, 31, 249, 0.05)';
+    
+    navFiles.style.color = 'var(--text-dim)';
+    navFiles.style.border = 'none';
+    navFiles.style.background = 'transparent';
+  } else {
+    navFiles.style.color = 'var(--pink)';
+    navFiles.style.border = '1px solid var(--pink-glow)';
+    navFiles.style.background = 'rgba(252, 31, 249, 0.05)';
+
+    navDash.style.color = 'var(--text-dim)';
+    navDash.style.border = 'none';
+    navDash.style.background = 'transparent';
+    
+    if (document.getElementById('file-list').children.length <= 1) {
+      loadRemoteFiles();
+    }
+  }
+}
+
+// --- Custom Prompt ---
+function customPrompt(message, defaultValue) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style = 'position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+    
+    const box = document.createElement('div');
+    box.style = 'background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--cyan-border); box-shadow: var(--neomorph-shadow); width: 350px; display: flex; flex-direction: column; gap: 16px; font-family: var(--font-ui);';
+    
+    const msg = document.createElement('div');
+    msg.style = 'color: var(--text); font-size: 14px;';
+    msg.textContent = message;
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = defaultValue;
+    input.style = 'background: var(--bg-secondary); border: 1px solid var(--cyan-border); color: var(--text); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 13px; outline: none; width: 100%; box-sizing: border-box;';
+    input.onfocus = () => input.style.borderColor = 'var(--pink)';
+    input.onblur = () => input.style.borderColor = 'var(--cyan-border)';
+    
+    const btnRow = document.createElement('div');
+    btnRow.style = 'display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px;';
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'CANCEL';
+    cancelBtn.style = 'background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-family: var(--font-ui); font-size: 12px; font-weight: 600; letter-spacing: 1px; padding: 8px 12px; transition: color 0.2s;';
+    cancelBtn.onmouseover = () => cancelBtn.style.color = 'var(--text)';
+    cancelBtn.onmouseout = () => cancelBtn.style.color = 'var(--text-dim)';
+    
+    const okBtn = document.createElement('button');
+    okBtn.textContent = 'OK';
+    okBtn.style = 'background: var(--pink); border: none; color: white; cursor: pointer; font-family: var(--font-ui); font-size: 12px; font-weight: 600; letter-spacing: 1px; padding: 8px 16px; border-radius: 6px; transition: opacity 0.2s;';
+    okBtn.onmouseover = () => okBtn.style.opacity = '0.8';
+    okBtn.onmouseout = () => okBtn.style.opacity = '1';
+    
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(okBtn);
+    
+    box.appendChild(msg);
+    box.appendChild(input);
+    box.appendChild(btnRow);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    
+    input.focus();
+    
+    const cleanup = () => {
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+    };
+    
+    cancelBtn.onclick = () => { cleanup(); resolve(null); };
+    okBtn.onclick = () => { cleanup(); resolve(input.value); };
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter') { cleanup(); resolve(input.value); }
+      if (e.key === 'Escape') { cleanup(); resolve(null); }
+    };
+  });
+}
+
+// --- Remote File Explorer ---
+let currentRemotePath = '~';
+
+async function loadRemoteFiles() {
+  const input = document.getElementById('file-path-input');
+  const path = input.value || '~';
+  const listEl = document.getElementById('file-list');
+  
+  listEl.innerHTML = '<div style="color: var(--pink); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Loading devices...</div>';
+  
+  try {
+    let targetDeviceId = localStorage.getItem('lastMobileId') || '';
+
+    // Fetch registered devices from backend
+    if (window.electronAPI.getDevices) {
+      try {
+        const devices = await window.electronAPI.getDevices();
+        if (devices && devices.length > 0) {
+          const deviceListStr = devices.map(d => `• ${d.hostname || d.device_id} [${d.status.toUpperCase()}] -> ID: ${d.device_id}`).join('\n');
+          const defaultId = targetDeviceId || devices[0].device_id;
+          const chosen = await customPrompt(`Available Registered Devices:\n${deviceListStr}\n\nEnter Device ID to connect to:`, defaultId);
+          if (chosen) targetDeviceId = chosen.trim();
+        }
+      } catch (e) {
+        console.warn('Could not fetch devices list:', e);
+      }
+    }
+
+    if (!targetDeviceId) {
+      targetDeviceId = await customPrompt("Enter the Device ID to connect to:", targetDeviceId);
+    }
+
+    if (!targetDeviceId) {
+      listEl.innerHTML = '<div style="color: var(--red); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Device ID required</div>';
+      return;
+    }
+    localStorage.setItem('lastMobileId', targetDeviceId);
+
+    listEl.innerHTML = '<div style="color: var(--pink); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Connecting to device...</div>';
+    const res = await window.electronAPI.sendCommand(targetDeviceId, 'file_list_dir', { dir_path: path });
+    
+    if (res.status === 'success') {
+      currentRemotePath = res.current_path;
+      input.value = currentRemotePath;
+      renderFileList(res.entries, res.parent_path, targetDeviceId);
+    } else {
+      listEl.innerHTML = `<div style="color: var(--red); font-family: var(--font-mono); font-size: 12px; margin-top: 20px;">Error: ${res.message || res.error || 'Command failed'}</div>`;
+    }
+  } catch (e) {
+    listEl.innerHTML = `<div style="color: var(--red); font-family: var(--font-mono); font-size: 12px; margin-top: 20px;">Request Failed: ${e.message}</div>`;
+  }
+}
+
+function renderFileList(entries, parentPath, deviceId) {
+  const listEl = document.getElementById('file-list');
+  listEl.innerHTML = '';
+  
+  const upBtn = document.createElement('div');
+  upBtn.style = 'padding: 8px; border-bottom: 1px solid var(--cyan-border); cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: var(--font-ui); font-size: 12px; transition: background 0.2s;';
+  upBtn.innerHTML = '<span>📁 .. (Up a directory)</span>';
+  upBtn.onmouseover = () => upBtn.style.background = 'rgba(255,255,255,0.05)';
+  upBtn.onmouseout = () => upBtn.style.background = 'transparent';
+  upBtn.onclick = () => {
+    document.getElementById('file-path-input').value = parentPath;
+    loadRemoteFiles();
+  };
+  listEl.appendChild(upBtn);
+
+  entries.forEach(item => {
+    const row = document.createElement('div');
+    row.style = 'padding: 8px; border-bottom: 1px solid var(--cyan-border); cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-family: var(--font-ui); font-size: 12px; transition: background 0.2s;';
+    
+    const left = document.createElement('div');
+    left.style = 'display: flex; align-items: center; gap: 8px;';
+    left.innerHTML = `<span>${item.type === 'folder' ? '📁' : '📄'}</span><span style="color: ${item.type === 'folder' ? 'var(--text)' : 'var(--text-dim)'}">${item.name}</span>`;
+    
+    const right = document.createElement('div');
+    right.style = 'font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);';
+    right.textContent = item.size || '';
+
+    row.appendChild(left);
+    row.appendChild(right);
+
+    row.onmouseover = () => row.style.background = 'rgba(255,255,255,0.05)';
+    row.onmouseout = () => row.style.background = 'transparent';
+    
+    row.onclick = () => {
+      if (item.type === 'folder') {
+        document.getElementById('file-path-input').value = item.path;
+        loadRemoteFiles();
+      } else {
+        downloadRemoteFile(deviceId, item.path, item.name);
+      }
+    };
+    
+    listEl.appendChild(row);
+  });
+}
+
+async function downloadRemoteFile(deviceId, remotePath, fileName) {
+  if (!confirm(`Do you want to download ${fileName} to your desktop?`)) return;
+  
+  const listEl = document.getElementById('file-list');
+  const prevHtml = listEl.innerHTML;
+  listEl.innerHTML = `<div style="color: var(--pink); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Downloading ${fileName}...</div>`;
+  
+  try {
+    const chunks = [];
+    let chunkIndex = 0;
+    let totalChunks = 1;
+    
+    while (chunkIndex < totalChunks) {
+      listEl.innerHTML = `<div style="color: var(--pink); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Downloading ${fileName}... (Chunk ${chunkIndex + 1}/${totalChunks})</div>`;
+      
+      const res = await window.electronAPI.sendCommand(deviceId, 'file_read_chunk', { file_path: remotePath, chunk_index: chunkIndex });
+      if (res.status !== 'success') throw new Error(res.message);
+      
+      chunks.push(res.data_b64);
+      totalChunks = res.total_chunks;
+      chunkIndex++;
+    }
+    
+    // Convert base64 chunks to blob and download
+    const byteCharacters = chunks.map(c => atob(c)).join('');
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray]);
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    alert('Download complete!');
+  } catch(e) {
+    alert(`Download failed: ${e.message}`);
+  }
+  
+  listEl.innerHTML = prevHtml;
+}
+
 // --- Sparkline data ---
 const history = { cpu: [], ram: [], disk: [], net: [] };
 const MAX_POINTS = 40;

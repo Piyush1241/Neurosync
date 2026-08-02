@@ -5,6 +5,11 @@ import time
 import logging
 from typing import Optional
 
+try:
+    import Quartz  # type: ignore # noqa: F401
+except ImportError:
+    Quartz = None
+
 pyautogui.FAILSAFE = False
 pyautogui.PAUSE = 0.0
 
@@ -37,14 +42,28 @@ class MouseController:
         w, h = pyautogui.size()
         return max(0, min(x, w - 1)), max(0, min(y, h - 1))
 
+    @staticmethod
+    def _mac_move(x: int, y: int):
+        if platform.system() == "Darwin" and Quartz is not None:
+            try:
+                fx, fy = float(x), float(y)
+                Quartz.CGWarpMouseCursorPosition(Quartz.CGPoint(fx, fy))
+                event = Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventMouseMoved, Quartz.CGPoint(fx, fy), Quartz.kCGMouseButtonLeft)
+                Quartz.CGEventPost(Quartz.kCGHIDEventTap, event)
+                Quartz.CGEventPost(Quartz.kCGSessionEventTap, event)
+            except Exception as ex:
+                logger.debug(f"Quartz move failed: {ex}")
+
     # ── Movement ──────────────────────────────────────────────────
 
     @classmethod
     def move(cls, x: int, y: int, duration: float = 0.0) -> dict:
         """Move mouse to absolute position (x, y)."""
-        x, y = cls._clamp(x, y)
+        x, y = cls._clamp(int(float(x)), int(float(y)))
         try:
             pyautogui.FAILSAFE = False
+            if platform.system() == "Darwin":
+                cls._mac_move(x, y)
             pyautogui.moveTo(x, y, duration=duration, _pause=False)
             cls._record(x, y)
             return {"status": "success", "x": x, "y": y}
@@ -56,8 +75,13 @@ class MouseController:
         """Move mouse by (dx, dy) relative to current position."""
         try:
             pyautogui.FAILSAFE = False
-            cx, cy = pyautogui.position()
-            nx, ny = cls._clamp(cx + dx, cy + dy)
+            dx, dy = int(float(dx)), int(float(dy))
+            pos = cls.get_position()
+            cx = pos.get("x", 0)
+            cy = pos.get("y", 0)
+            nx, ny = cls._clamp(int(cx + dx), int(cy + dy))
+            if platform.system() == "Darwin":
+                cls._mac_move(nx, ny)
             if duration > 0:
                 pyautogui.moveTo(nx, ny, duration=duration, _pause=False)
             else:
@@ -74,15 +98,17 @@ class MouseController:
         More human-like than a straight moveTo.
         """
         import random
-        x, y = cls._clamp(x, y)
+        x, y = cls._clamp(int(float(x)), int(float(y)))
         try:
-            cx, cy = pyautogui.position()
+            pos = cls.get_position()
+            cx, cy = pos.get("x", 0), pos.get("y", 0)
             for i in range(1, steps + 1):
                 t = i / steps
-                # ease in-out cubic
                 t_ease = t * t * (3 - 2 * t)
                 nx = int(cx + (x - cx) * t_ease)
                 ny = int(cy + (y - cy) * t_ease)
+                if platform.system() == "Darwin":
+                    cls._mac_move(nx, ny)
                 pyautogui.moveTo(nx, ny, duration=0)
                 time.sleep(0.008 + random.uniform(0, 0.004))
             cls._record(x, y)
@@ -97,13 +123,33 @@ class MouseController:
         """Left/right/middle click at current or given position."""
         try:
             if x is not None and y is not None:
-                x, y = cls._clamp(x, y)
+                x, y = cls._clamp(int(float(x)), int(float(y)))
+                if platform.system() == "Darwin":
+                    cls._mac_move(x, y)
+
+            if platform.system() == "Darwin" and Quartz is not None:
+                try:
+                    pos = cls.get_position()
+                    cx = x if x is not None else pos.get("x", 0)
+                    cy = y if y is not None else pos.get("y", 0)
+                    btn = Quartz.kCGMouseButtonRight if button == "right" else Quartz.kCGMouseButtonLeft
+                    down_evt = Quartz.kCGEventRightMouseDown if button == "right" else Quartz.kCGEventLeftMouseDown
+                    up_evt = Quartz.kCGEventRightMouseUp if button == "right" else Quartz.kCGEventLeftMouseUp
+                    e_down = Quartz.CGEventCreateMouseEvent(None, down_evt, Quartz.CGPoint(float(cx), float(cy)), btn)
+                    e_up = Quartz.CGEventCreateMouseEvent(None, up_evt, Quartz.CGPoint(float(cx), float(cy)), btn)
+                    Quartz.CGEventPost(Quartz.kCGHIDEventTap, e_down)
+                    Quartz.CGEventPost(Quartz.kCGHIDEventTap, e_up)
+                    Quartz.CGEventPost(Quartz.kCGSessionEventTap, e_down)
+                    Quartz.CGEventPost(Quartz.kCGSessionEventTap, e_up)
+                except Exception as ex:
+                    logger.debug(f"Quartz click failed: {ex}")
+
+            if x is not None and y is not None:
                 pyautogui.click(x, y, button=button)
-                cls._record(x, y)
             else:
                 pyautogui.click(button=button)
-            pos = pyautogui.position()
-            return {"status": "success", "button": button, "x": pos.x, "y": pos.y}
+            pos = cls.get_position()
+            return {"status": "success", "button": button, "x": pos.get("x"), "y": pos.get("y")}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
@@ -225,6 +271,13 @@ class MouseController:
 
     @classmethod
     def get_position(cls) -> dict:
+        if platform.system() == "Darwin" and Quartz is not None:
+            try:
+                evt = Quartz.CGEventCreate(None)
+                loc = Quartz.CGEventGetLocation(evt)
+                return {"status": "success", "x": int(loc.x), "y": int(loc.y)}
+            except Exception:
+                pass
         x, y = pyautogui.position()
         return {"status": "success", "x": x, "y": y}
 

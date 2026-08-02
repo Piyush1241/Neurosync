@@ -225,6 +225,18 @@ function runPipInstall(token) {
 }
 
 function startAgentProcess(token) {
+  if (process.platform === 'darwin') {
+    try {
+      const { systemPreferences } = require('electron');
+      const isTrusted = systemPreferences.isTrustedAccessibilityClient(true);
+      if (!isTrusted) {
+        if (mainWindow) mainWindow.webContents.send('agent-log', '[WARNING] macOS Accessibility permission required for mouse movement and special keys! Please grant permission in System Settings > Privacy & Security > Accessibility.');
+      }
+    } catch (e) {
+      console.error('Accessibility check error:', e);
+    }
+  }
+
   const agentScript = app.isPackaged
   ? path.join(process.resourcesPath, 'desktop-agent', 'agent', 'main.py')
   : path.join(__dirname, '..', 'desktop-agent', 'agent', 'main.py');
@@ -347,4 +359,74 @@ ipcMain.handle('logout', async () => {
   if (statsProcess) { statsProcess.kill(); statsProcess = null; }
   if (mainWindow) mainWindow.close();
   createLoginWindow();
+});
+
+ipcMain.handle('send-command', async (_, deviceId, action, payload = {}) => {
+  if (!authToken) throw new Error('Not authenticated');
+
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify({ device_id: deviceId, action, payload });
+    const transport = BACKEND_SECURE ? https : http;
+    const req = transport.request({
+      hostname: BACKEND_HOST,
+      port: BACKEND_PORT,
+      path: '/api/v1/command',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Length': Buffer.byteLength(data)
+      }
+    }, (res) => {
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(body);
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(parsed);
+          } else {
+            reject(new Error(parsed.error || parsed.detail || `Command failed with status ${res.statusCode}`));
+          }
+        } catch (e) {
+          reject(new Error(`Server returned non-JSON response (${res.statusCode}): ${body.substring(0, 120)}`));
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+});
+
+ipcMain.handle('get-devices', async () => {
+  if (!authToken) throw new Error('Not authenticated');
+
+  return new Promise((resolve, reject) => {
+    const transport = BACKEND_SECURE ? https : http;
+    const req = transport.request({
+      hostname: BACKEND_HOST,
+      port: BACKEND_PORT,
+      path: '/api/v1/devices',
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    }, (res) => {
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(body);
+          resolve(parsed.devices || []);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.end();
+  });
 });

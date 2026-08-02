@@ -7,6 +7,7 @@ import { Colors, Fonts, Spacing, Radius } from '../theme';
 import { sendCommand } from '../services/commandService';
 import FileEditorModal from '../components/FileEditorModal';
 import FilePreviewModal from '../components/FilePreviewModal';
+import RNFS from 'react-native-fs';
 
 interface FileItem {
   name: string;
@@ -76,7 +77,14 @@ export default function FileExplorerScreen({ route, navigation }: any) {
     setTransferStatusText(`Downloading ${item.name}...`);
 
     try {
-      // Step 1: Read Chunk 0 to get metadata
+      const destPath = `${RNFS.DownloadDirectoryPath}/${item.name}`;
+      
+      // Clear file if it exists
+      if (await RNFS.exists(destPath)) {
+        await RNFS.unlink(destPath);
+      }
+
+      // Step 1: Read Chunk 0
       const res0 = await sendCommand(deviceId, 'file_read_chunk', {
         file_path: item.path,
         chunk_index: 0,
@@ -85,6 +93,8 @@ export default function FileExplorerScreen({ route, navigation }: any) {
       if (!res0 || res0.status !== 'success') {
         throw new Error(res0?.message || 'Failed to read initial file chunk');
       }
+
+      await RNFS.appendFile(destPath, res0.data_b64, 'base64');
 
       const totalChunks = res0.total_chunks;
       let downloadedChunks = 1;
@@ -100,6 +110,9 @@ export default function FileExplorerScreen({ route, navigation }: any) {
         if (!chunkRes || chunkRes.status !== 'success') {
           throw new Error(`Failed to download chunk ${i}`);
         }
+        
+        await RNFS.appendFile(destPath, chunkRes.data_b64, 'base64');
+        
         downloadedChunks++;
         setTransferProgress(downloadedChunks / totalChunks);
       }
@@ -107,7 +120,7 @@ export default function FileExplorerScreen({ route, navigation }: any) {
       setTransferring(false);
       Alert.alert(
         'Transfer Complete 🚀',
-        `Successfully downloaded "${item.name}" (${item.size}) from remote desktop machine.`
+        `Successfully downloaded "${item.name}" to:\n${destPath}`
       );
     } catch (err: any) {
       setTransferring(false);

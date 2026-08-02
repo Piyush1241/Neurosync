@@ -1,3 +1,5 @@
+import asyncio
+import uuid
 import logging
 import json
 from fastapi import WebSocket, WebSocketDisconnect, APIRouter, Depends
@@ -15,6 +17,9 @@ from app.core.dependencies import get_current_user
 logger = logging.getLogger("command_handler")
 router = APIRouter()
 _manager: ConnectionManager = None
+
+# Store futures for pending commands: request_id -> asyncio.Future
+pending_commands = {}
 
 def set_manager(manager: ConnectionManager):
     global _manager
@@ -150,7 +155,11 @@ async def handle_agent_connection(websocket: WebSocket, manager: ConnectionManag
                     _manager.device_metrics[device_id] = metrics
                 await websocket.send_json({"type": "heartbeat_ack"})
             elif msg_type == "command_result":
-                logger.info(f"Result from {device_id}: {msg}")
+                request_id = msg.get("request_id")
+                if request_id and request_id in pending_commands:
+                    pending_commands[request_id].set_result(msg)
+                else:
+                    logger.info(f"Result from {device_id} without pending future: {msg.get('action')}")
             else:
                 logger.warning(f"Unknown message from {device_id}: {msg_type}")
 
@@ -180,13 +189,19 @@ async def send_command(
     if _manager is None:
         return JSONResponse(status_code=503, content={"error": "Manager not initialized"})
 
+    request_id = str(uuid.uuid4())
+    future = asyncio.Future()
+    pending_commands[request_id] = future
+
     sent = await _manager.send_to_device(req.device_id, {
         "type": "command",
         "action": req.action,
+        "request_id": request_id,
         "payload": req.payload
     })
 
     if not sent:
+        del pending_commands[request_id]
         return JSONResponse(status_code=404, content={"error": "Device not connected"})
 
     cmd = Command(
@@ -198,7 +213,15 @@ async def send_command(
     db.add(cmd)
     db.commit()
 
-    return {"status": "sent", "device_id": req.device_id, "action": req.action, "command_id": cmd.command_id}
+    try:
+        # Wait for the result from the websocket
+        result = await asyncio.wait_for(future, timeout=30.0)
+        return result
+    except asyncio.TimeoutError:
+        return JSONResponse(status_code=504, content={"error": "Command timeout: Agent did not respond in time"})
+    finally:
+        if request_id in pending_commands:
+            del pending_commands[request_id]
 
 
 @router.get("/commands/{device_id}")

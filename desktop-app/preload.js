@@ -15,4 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onAgentLog:    (cb) => ipcRenderer.on('agent-log',    (_, d) => cb(d)),
   onAgentStatus: (cb) => ipcRenderer.on('agent-status', (_, d) => cb(d)),
   onStatsUpdate: (cb) => ipcRenderer.on('stats-update', (_, d) => cb(d)),
+  
+  // API
+  sendCommand:   (deviceId, action, payload) => ipcRenderer.invoke('send-command', deviceId, action, payload),
+  getDevices:    ()                          => ipcRenderer.invoke('get-devices'),
 });

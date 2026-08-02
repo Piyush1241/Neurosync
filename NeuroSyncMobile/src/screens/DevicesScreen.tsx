@@ -8,6 +8,7 @@ import {
 import {Colors, Fonts, Spacing, Radius} from '../theme';
 import {api} from '../services/apiClient';
 import {logoutUser} from '../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function GridLines() {
   return (
@@ -96,9 +97,13 @@ export default function DevicesScreen({navigation}: any) {
   const [devices, setDevices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [myDeviceId, setMyDeviceId] = useState<string>('');
 
   useEffect(() => {
     fetchDevices();
+    AsyncStorage.getItem('device_id').then(id => {
+      if (id) setMyDeviceId(id);
+    });
   }, []);
 
   const fetchDevices = async () => {
@@ -181,6 +186,13 @@ export default function DevicesScreen({navigation}: any) {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {myDeviceId ? (
+        <View style={s.myDeviceBox}>
+          <Text style={s.myDeviceLabel}>YOUR MOBILE ID</Text>
+          <Text style={s.myDeviceId} selectable={true}>{myDeviceId}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -198,7 +210,10 @@ const s = StyleSheet.create({
   empty: {flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 80},
   emptyIcon: {color: Colors.violetDim, fontSize: 40, marginBottom: 16},
   emptyTitle: {color: Colors.textSecondary, fontSize: 16, fontFamily: Fonts.display, letterSpacing: 1, marginBottom: 8},
-  emptyHint: {color: Colors.textMuted, fontSize: 12, fontFamily: Fonts.body, textAlign: 'center', lineHeight: 18},
+  emptyHint: {color: Colors.textMuted, fontSize: 11, fontFamily: Fonts.body, textAlign: 'center', lineHeight: 18, paddingHorizontal: 40},
   loadingIndicator: {marginTop: 60},
-  listContent: {paddingBottom: 40},
+  listContent: {paddingBottom: 80},
+  myDeviceBox: {marginTop: Spacing.md, padding: Spacing.md, backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.magentaBorder, borderRadius: Radius.md, alignItems: 'center'},
+  myDeviceLabel: {color: Colors.textMuted, fontSize: 9, fontFamily: Fonts.ui, letterSpacing: 2, marginBottom: 4},
+  myDeviceId: {color: Colors.magenta, fontSize: 13, fontFamily: Fonts.mono, fontWeight: '700'},
 });

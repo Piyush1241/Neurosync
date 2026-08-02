@@ -148,16 +148,26 @@ class AppLauncher:
     @classmethod
     def open_notepad(cls, file_path: str = "") -> dict:
         sys = cls._system()
+        import time
         if sys == "Darwin":
             args = ["open", "-a", "TextEdit"] + ([file_path] if file_path else [])
-            return cls._launch(args, label="notepad")
+            res = cls._launch(args, label="notepad")
+            # Ensure TextEdit is active and has an open document window
+            cmd = 'osascript -e \'tell application "TextEdit" to activate\' -e \'tell application "TextEdit" to if (count of documents) is 0 then make new document\''
+            os.system(cmd)
+            time.sleep(0.5)
+            return res
         elif sys == "Windows":
             args = ["notepad"] + ([file_path] if file_path else [])
-            return cls._launch(args, label="notepad")
+            res = cls._launch(args, label="notepad")
+            time.sleep(0.5)
+            return res
         elif sys == "Linux":
             for editor in ["gedit", "kate", "mousepad", "xed"]:
                 if cls._which(editor):
-                    return cls._launch([editor] + ([file_path] if file_path else []), label=editor)
+                    res = cls._launch([editor] + ([file_path] if file_path else []), label=editor)
+                    time.sleep(0.5)
+                    return res
             return {"status": "error", "message": "No text editor found"}
         return {"status": "error", "message": f"Unsupported OS: {sys}"}
 

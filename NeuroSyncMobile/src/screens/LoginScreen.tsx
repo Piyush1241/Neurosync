@@ -22,9 +22,15 @@ import { Colors, Fonts, Spacing, Radius } from '../theme';
 import { CornerBrackets, ScanlineOverlay } from '../components/HudComponents';
 import {loginUser} from '../services/authService';
 
-GoogleSignin.configure({
-  webClientId: '639946205950-mqi82vf5budradj2r9jlatfsaemkam51.apps.googleusercontent.com',
-});
+// Configure Google Sign-In with webClientId and iosClientId to prevent iOS crashes
+try {
+  GoogleSignin.configure({
+    webClientId: '639946205950-mqi82vf5budradj2r9jlatfsaemkam51.apps.googleusercontent.com',
+    iosClientId: '639946205950-mqi82vf5budradj2r9jlatfsaemkam51.apps.googleusercontent.com',
+  });
+} catch (error) {
+  console.log('GoogleSignin configure error:', error);
+}
 
 // Arc reactor logo
 function ArcReactor({ size = 100 }: { size?: number }) {

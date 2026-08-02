@@ -1,6 +1,6 @@
-const { app, BrowserWindow, ipcMain, Menu, MenuItem } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog } = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const http = require('http');
 const os = require('os');
@@ -20,15 +20,25 @@ let agentProcess;
 let statsProcess;
 let authToken = null;
 
+function isRealPython(cmd) {
+  try {
+    const res = spawnSync(cmd, ['--version'], { encoding: 'utf8', timeout: 3000 });
+    const out = ((res.stdout || '') + (res.stderr || '')).toLowerCase();
+    return out.includes('python 3') && !out.includes('not found') && !out.includes('microsoft store');
+  } catch (e) {
+    return false;
+  }
+}
+
 function getPythonExecutable() {
   if (app.isPackaged) {
     const bundledWin = path.join(process.resourcesPath, 'python', 'python.exe');
     const bundledMac = path.join(process.resourcesPath, 'python', 'bin', 'python3');
     const bundledLinux = path.join(process.resourcesPath, 'python', 'bin', 'python3');
 
-    if (process.platform === 'win32' && fs.existsSync(bundledWin)) return bundledWin;
-    if (process.platform === 'darwin' && fs.existsSync(bundledMac)) return bundledMac;
-    if (process.platform === 'linux' && fs.existsSync(bundledLinux)) return bundledLinux;
+    if (process.platform === 'win32' && fs.existsSync(bundledWin) && isRealPython(bundledWin)) return bundledWin;
+    if (process.platform === 'darwin' && fs.existsSync(bundledMac) && isRealPython(bundledMac)) return bundledMac;
+    if (process.platform === 'linux' && fs.existsSync(bundledLinux) && isRealPython(bundledLinux)) return bundledLinux;
   }
 
   if (process.platform === 'win32') {
@@ -37,26 +47,35 @@ function getPythonExecutable() {
     const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
 
     const candidates = [
+      'py',
+      path.join(localAppData, 'Programs', 'Python', 'Python313', 'python.exe'),
       path.join(localAppData, 'Programs', 'Python', 'Python312', 'python.exe'),
       path.join(localAppData, 'Programs', 'Python', 'Python311', 'python.exe'),
       path.join(localAppData, 'Programs', 'Python', 'Python310', 'python.exe'),
+      path.join(localAppData, 'Programs', 'Python', 'Python39', 'python.exe'),
+      path.join(programFiles, 'Python313', 'python.exe'),
       path.join(programFiles, 'Python312', 'python.exe'),
       path.join(programFiles, 'Python311', 'python.exe'),
+      path.join(programFiles, 'Python310', 'python.exe'),
+      'C:\\Python313\\python.exe',
       'C:\\Python312\\python.exe',
       'C:\\Python311\\python.exe',
+      'C:\\Python310\\python.exe',
       'python',
       'python3',
-      'py',
     ];
 
     for (const cand of candidates) {
-      if (!cand.includes('\\') && !cand.includes('/')) return cand;
-      if (fs.existsSync(cand)) return cand;
+      if ((cand.includes('\\') || cand.includes('/')) && !fs.existsSync(cand)) continue;
+      if (isRealPython(cand)) return cand;
     }
-    return 'python';
+    return null;
   } else {
     const customPython = '/Library/Frameworks/Python.framework/Versions/3.12/bin/python3';
-    return fs.existsSync(customPython) ? customPython : 'python3';
+    if (fs.existsSync(customPython) && isRealPython(customPython)) return customPython;
+    if (isRealPython('python3')) return 'python3';
+    if (isRealPython('python')) return 'python';
+    return null;
   }
 }
 
@@ -165,7 +184,24 @@ function createDashboardWindow() {
 }
 
 function ensureDependenciesAndStartAgent(token) {
-  if (mainWindow) mainWindow.webContents.send('agent-log', 'Checking Python dependencies...');
+  const pythonExe = getPythonExecutable();
+  
+  if (!pythonExe) {
+    const missingMsg = process.platform === 'win32'
+      ? '[SETUP ERROR] Python 3 is not installed or the Windows App execution alias is blocking it!\n\nPlease download Python 3 from https://www.python.org/downloads/ (make sure to check "Add python.exe to PATH" during installation) OR disable the App Execution Alias in Windows Settings > Apps > Advanced app settings > App execution aliases.'
+      : '[SETUP ERROR] Python 3 was not found on your system PATH. Please install Python 3.10+ from python.org to continue.';
+
+    if (mainWindow) {
+      mainWindow.webContents.send('agent-log', missingMsg);
+      mainWindow.webContents.send('agent-status', 'error');
+    }
+    try {
+      dialog.showErrorBox('Python 3 Required', missingMsg);
+    } catch (e) {}
+    return;
+  }
+
+  if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] Using Python engine: ${pythonExe}`);
   
   const checkCmd = 'import dotenv, psutil, websockets, pyautogui, pyperclip, requests; print("DEPS_OK")';
   const checkProc = spawn(pythonExe, ['-c', checkCmd]);
@@ -180,26 +216,28 @@ function ensureDependenciesAndStartAgent(token) {
       startStats();
     } else {
       if (mainWindow) mainWindow.webContents.send('agent-log', 'Missing dependencies detected. Installing required packages via pip...');
-      runPipInstall(token);
+      runPipInstall(token, pythonExe);
     }
   });
 
   checkProc.on('error', (err) => {
     if (err.code === 'ENOENT') {
-      const missingMsg = '[ERROR] Python 3 is not installed or not found on system PATH. Please install Python 3.10+ from python.org';
+      const missingMsg = '[ERROR] Python 3 executable could not be launched. Please verify Python installation.';
       if (mainWindow) {
         mainWindow.webContents.send('agent-log', missingMsg);
         mainWindow.webContents.send('agent-status', 'error');
       }
     } else {
-      runPipInstall(token);
+      runPipInstall(token, pythonExe);
     }
   });
 }
 
-function runPipInstall(token) {
+function runPipInstall(token, pythonExe) {
+  const exe = pythonExe || getPythonExecutable();
+  if (!exe) return;
   try {
-    const installProc = spawn(pythonExe, ['-m', 'pip', 'install', 'python-dotenv', 'psutil', 'websockets', 'pyautogui', 'pyperclip', 'requests']);
+    const installProc = spawn(exe, ['-m', 'pip', 'install', 'python-dotenv', 'psutil', 'websockets', 'pyautogui', 'pyperclip', 'requests']);
 
     installProc.stdout.on('data', (d) => {
       if (mainWindow) mainWindow.webContents.send('agent-log', `[SETUP] ${d.toString().trim()}`);
@@ -225,6 +263,9 @@ function runPipInstall(token) {
 }
 
 function startAgentProcess(token) {
+  const pythonExe = getPythonExecutable();
+  if (!pythonExe) return;
+
   if (process.platform === 'darwin') {
     try {
       const { systemPreferences } = require('electron');
@@ -266,6 +307,9 @@ function startAgent(token) {
 }
 
 function startStats() {
+  const pythonExe = getPythonExecutable();
+  if (!pythonExe) return;
+
   const candidatePaths = app.isPackaged
     ? [
         path.join(process.resourcesPath, 'app.asar.unpacked', 'renderer', 'stats.py'),

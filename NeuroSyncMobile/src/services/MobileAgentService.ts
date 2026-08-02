@@ -125,9 +125,40 @@ class MobileAgentService {
   }
 
   private async listDir(dirPath: string) {
-    // Default to DocumentDirectoryPath if path is ~
-    const targetPath = dirPath === '~' ? RNFS.DocumentDirectoryPath : dirPath;
-    
+    const isRoot = !dirPath || dirPath === '~' || dirPath === '/' || dirPath === 'ROOT' || dirPath.includes('Device Storage');
+
+    const docPath = RNFS.DocumentDirectoryPath;
+    const downloadsPath = `${docPath}/Downloads`;
+    const picturesPath = `${docPath}/Pictures`;
+
+    try { await RNFS.mkdir(downloadsPath); } catch {}
+    try { await RNFS.mkdir(picturesPath); } catch {}
+
+    if (isRoot) {
+      const rootEntries: any[] = [
+        { name: 'Documents', path: docPath, type: 'folder', size: '—', modified: Date.now(), extension: '' },
+        { name: 'Downloads', path: downloadsPath, type: 'folder', size: '—', modified: Date.now(), extension: '' },
+        { name: 'Pictures', path: picturesPath, type: 'folder', size: '—', modified: Date.now(), extension: '' },
+      ];
+
+      if (RNFS.CachesDirectoryPath) {
+        rootEntries.push({ name: 'App Caches', path: RNFS.CachesDirectoryPath, type: 'folder', size: '—', modified: Date.now(), extension: '' });
+      }
+
+      return {
+        status: 'success',
+        current_path: 'Device Storage (~)',
+        parent_path: 'Device Storage (~)',
+        entries: rootEntries
+      };
+    }
+
+    let targetPath = dirPath;
+    if (dirPath === 'Documents' || dirPath === '~/Documents') targetPath = docPath;
+    else if (dirPath === 'Downloads' || dirPath === '~/Downloads') targetPath = downloadsPath;
+    else if (dirPath === 'Pictures' || dirPath === '~/Pictures') targetPath = picturesPath;
+    else if (dirPath === 'Desktop' || dirPath === '~/Desktop') targetPath = docPath;
+
     if (!(await RNFS.exists(targetPath))) {
       return { status: 'error', message: 'Directory not found' };
     }
@@ -137,7 +168,7 @@ class MobileAgentService {
       name: item.name,
       path: item.path,
       type: item.isDirectory() ? 'folder' : 'file',
-      size: item.isDirectory() ? '' : this.formatSize(item.size),
+      size: item.isDirectory() ? '—' : this.formatSize(item.size),
       size_bytes: item.size,
       modified: item.mtime?.getTime() || 0,
       extension: item.name.includes('.') ? `.${item.name.split('.').pop()}` : ''
@@ -149,14 +180,13 @@ class MobileAgentService {
       return a.name.localeCompare(b.name);
     });
 
-    const parentPath = targetPath === RNFS.DocumentDirectoryPath 
-      ? targetPath 
-      : targetPath.substring(0, targetPath.lastIndexOf('/'));
+    const isTopDoc = targetPath === docPath || targetPath === downloadsPath || targetPath === picturesPath;
+    const parentPath = isTopDoc ? 'Device Storage (~)' : (targetPath.substring(0, targetPath.lastIndexOf('/')) || 'Device Storage (~)');
 
     return {
       status: 'success',
       current_path: targetPath,
-      parent_path: parentPath || targetPath,
+      parent_path: parentPath,
       entries: entries
     };
   }

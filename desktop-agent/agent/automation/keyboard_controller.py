@@ -387,6 +387,88 @@ class KeyboardController:
             return {"status": "error", "message": str(e)}
 
     @staticmethod
+    def _capture_screen_pil():
+        """Capture screen across Windows (with GDI fallback), macOS, and Linux."""
+        import platform
+        sys_name = platform.system()
+        
+        # 1. Try PyAutoGUI / ImageGrab first
+        try:
+            return pyautogui.screenshot()
+        except Exception:
+            pass
+
+        # 2. Try PIL ImageGrab directly
+        try:
+            from PIL import ImageGrab
+            return ImageGrab.grab()
+        except Exception:
+            pass
+
+        # 3. Windows Native GDI fallback (handles DPI awareness and layered windows)
+        if sys_name == "Windows":
+            try:
+                import ctypes
+                from PIL import Image
+
+                user32 = ctypes.windll.user32
+                gdi32 = ctypes.windll.gdi32
+
+                try:
+                    user32.SetProcessDPIAware()
+                except Exception:
+                    pass
+
+                w = user32.GetSystemMetrics(0)
+                h = user32.GetSystemMetrics(1)
+
+                hdc_src = user32.GetDC(0)
+                hdc_mem = gdi32.CreateCompatibleDC(hdc_src)
+                hbmp = gdi32.CreateCompatibleBitmap(hdc_src, w, h)
+                gdi32.SelectObject(hdc_mem, hbmp)
+
+                # SRCCOPY = 0x00CC0020
+                gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_src, 0, 0, 0x00CC0020)
+
+                class BITMAPINFOHEADER(ctypes.Structure):
+                    _fields_ = [
+                        ('biSize', ctypes.c_uint32),
+                        ('biWidth', ctypes.c_int32),
+                        ('biHeight', ctypes.c_int32),
+                        ('biPlanes', ctypes.c_uint16),
+                        ('biBitCount', ctypes.c_uint16),
+                        ('biCompression', ctypes.c_uint32),
+                        ('biSizeImage', ctypes.c_uint32),
+                        ('biXPelsPerMeter', ctypes.c_int32),
+                        ('biYPelsPerMeter', ctypes.c_int32),
+                        ('biClrUsed', ctypes.c_uint32),
+                        ('biClrImportant', ctypes.c_uint32)
+                    ]
+
+                bmi = BITMAPINFOHEADER()
+                bmi.biSize = ctypes.sizeof(BITMAPINFOHEADER)
+                bmi.biWidth = w
+                bmi.biHeight = -h
+                bmi.biPlanes = 1
+                bmi.biBitCount = 32
+                bmi.biCompression = 0
+
+                buf = ctypes.create_string_buffer(w * h * 4)
+                gdi32.GetDIBits(hdc_mem, hbmp, 0, h, buf, ctypes.byref(bmi), 0)
+
+                img = Image.frombuffer('RGBA', (w, h), buf, 'raw', 'BGRA', 0, 1)
+
+                gdi32.DeleteObject(hbmp)
+                gdi32.DeleteDC(hdc_mem)
+                user32.ReleaseDC(0, hdc_src)
+
+                return img
+            except Exception as ex:
+                raise RuntimeError(f"Native Windows GDI screen grab failed: {ex}")
+
+        raise RuntimeError("Screen grab failed on this system")
+
+    @staticmethod
     def take_screenshot(save_to_disk: bool = True) -> dict:
         """Capture screen, save PNG file to Pictures/Screenshots, trigger OS screenshot key, and return base64 string."""
         try:
@@ -396,7 +478,7 @@ class KeyboardController:
             import os
             sys_name = platform.system()
             
-            img = pyautogui.screenshot()
+            img = KeyboardController._capture_screen_pil()
             
             saved_path = None
             if save_to_disk:

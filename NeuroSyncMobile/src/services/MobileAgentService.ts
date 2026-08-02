@@ -134,6 +134,12 @@ class MobileAgentService {
     try { await RNFS.mkdir(downloadsPath); } catch {}
     try { await RNFS.mkdir(picturesPath); } catch {}
 
+    // Ensure at least one welcome file exists in Documents for testing
+    const sampleFile = `${docPath}/NeuroSync_Notes.txt`;
+    if (!(await RNFS.exists(sampleFile))) {
+      try { await RNFS.writeFile(sampleFile, 'Welcome to NeuroSync Remote File Sharing!\nThis file is synced across your devices.', 'utf8'); } catch {}
+    }
+
     if (isRoot) {
       const rootEntries: any[] = [
         { name: 'Documents', path: docPath, type: 'folder', size: '—', modified: Date.now(), extension: '' },
@@ -147,23 +153,41 @@ class MobileAgentService {
 
       return {
         status: 'success',
-        current_path: 'Device Storage (~)',
-        parent_path: 'Device Storage (~)',
+        current_path: docPath,
+        display_path: '~',
+        parent_path: '~',
         entries: rootEntries
       };
     }
 
     let targetPath = dirPath;
-    if (dirPath === 'Documents' || dirPath === '~/Documents') targetPath = docPath;
-    else if (dirPath === 'Downloads' || dirPath === '~/Downloads') targetPath = downloadsPath;
-    else if (dirPath === 'Pictures' || dirPath === '~/Pictures') targetPath = picturesPath;
-    else if (dirPath === 'Desktop' || dirPath === '~/Desktop') targetPath = docPath;
+    let displayPath = dirPath;
+
+    if (dirPath === 'Documents' || dirPath === '~/Documents') {
+      targetPath = docPath;
+      displayPath = '~/Documents';
+    } else if (dirPath === 'Downloads' || dirPath === '~/Downloads') {
+      targetPath = downloadsPath;
+      displayPath = '~/Downloads';
+    } else if (dirPath === 'Pictures' || dirPath === '~/Pictures') {
+      targetPath = picturesPath;
+      displayPath = '~/Pictures';
+    } else if (dirPath === 'Desktop' || dirPath === '~/Desktop') {
+      targetPath = docPath;
+      displayPath = '~/Desktop';
+    }
 
     if (!(await RNFS.exists(targetPath))) {
       return { status: 'error', message: 'Directory not found' };
     }
 
-    const items = await RNFS.readDir(targetPath);
+    let items: any[] = [];
+    try {
+      items = await RNFS.readDir(targetPath);
+    } catch (e: any) {
+      return { status: 'error', message: `Access Denied: ${e.message || 'Cannot access directory'}` };
+    }
+
     const entries = items.map(item => ({
       name: item.name,
       path: item.path,
@@ -174,18 +198,18 @@ class MobileAgentService {
       extension: item.name.includes('.') ? `.${item.name.split('.').pop()}` : ''
     }));
 
-    // Sort: folders first, then alphabetical
     entries.sort((a, b) => {
       if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
 
     const isTopDoc = targetPath === docPath || targetPath === downloadsPath || targetPath === picturesPath;
-    const parentPath = isTopDoc ? 'Device Storage (~)' : (targetPath.substring(0, targetPath.lastIndexOf('/')) || 'Device Storage (~)');
+    const parentPath = isTopDoc ? '~' : (targetPath.substring(0, targetPath.lastIndexOf('/')) || '~');
 
     return {
       status: 'success',
       current_path: targetPath,
+      display_path: displayPath,
       parent_path: parentPath,
       entries: entries
     };

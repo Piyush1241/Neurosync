@@ -54,8 +54,8 @@ class KeyboardController:
 
                 # 2. System Events keystroke
                 escaped = text.replace('\\', '\\\\').replace('"', '\\"')
-                cmd = f'osascript -e \'tell application "System Events" to keystroke "{escaped}"\''
-                res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                script = f'tell application "System Events" to keystroke "{escaped}"'
+                res = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
                 if res.returncode == 0:
                     return {"status": "success", "typed": text, "length": len(text)}
                 elif "not allowed to send keystrokes" in res.stderr or "1002" in res.stderr:

@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "prepare-python": "node scripts/setup-python-embed.js",
+    "build": "node scripts/setup-python-embed.js && electron-builder"
   },
   "build": {
     "appId": "com.neurosync.desktop",

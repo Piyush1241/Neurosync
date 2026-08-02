@@ -13,8 +13,14 @@ class FileTransferEngine:
         try:
             if not dir_path or dir_path in ("~", "ROOT", "Device Root", "/"):
                 target = os.path.expanduser("~")
+            elif dir_path.startswith("~"):
+                target = os.path.expanduser(dir_path)
             else:
-                target = os.path.expanduser(dir_path) if dir_path.startswith("~") else dir_path
+                home_candidate = os.path.expanduser(f"~/{dir_path}")
+                if os.path.exists(home_candidate):
+                    target = home_candidate
+                else:
+                    target = os.path.abspath(dir_path)
             target = os.path.abspath(target)
             
             if not os.path.exists(target):

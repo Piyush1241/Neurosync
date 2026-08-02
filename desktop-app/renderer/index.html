@@ -518,9 +518,9 @@
     <div class="section-label">REMOTE FILE EXPLORER</div>
     <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
       <button onclick="setRemotePath('~')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">🏠 Device Home (~)</button>
-      <button onclick="setRemotePath('Documents')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">📁 Documents</button>
-      <button onclick="setRemotePath('Downloads')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">📥 Downloads</button>
-      <button onclick="setRemotePath('Desktop')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">🖥️ Desktop</button>
+      <button onclick="setRemotePath('~/Documents')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">📁 Documents</button>
+      <button onclick="setRemotePath('~/Downloads')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">📥 Downloads</button>
+      <button onclick="setRemotePath('~/Desktop')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">🖥️ Desktop</button>
     </div>
     <div style="display: flex; gap: 10px; margin-bottom: 12px;">
       <input type="text" id="file-path-input" value="~" style="flex: 1; background: var(--bg); border: 1px solid var(--cyan-border); color: var(--text); font-family: var(--font-mono); padding: 8px 12px; border-radius: 8px;" />

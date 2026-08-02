@@ -153,7 +153,12 @@ class MobileAgentService {
       };
     }
 
-    const targetPath = dirPath;
+    let targetPath = dirPath;
+    if (dirPath === 'Documents' || dirPath === '~/Documents') targetPath = docPath;
+    else if (dirPath === 'Downloads' || dirPath === '~/Downloads') targetPath = downloadsPath;
+    else if (dirPath === 'Pictures' || dirPath === '~/Pictures') targetPath = picturesPath;
+    else if (dirPath === 'Desktop' || dirPath === '~/Desktop') targetPath = docPath;
+
     if (!(await RNFS.exists(targetPath))) {
       return { status: 'error', message: 'Directory not found' };
     }

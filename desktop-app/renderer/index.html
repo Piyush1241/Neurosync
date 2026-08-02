@@ -571,9 +571,11 @@ function switchTab(tab) {
     navDash.style.border = 'none';
     navDash.style.background = 'transparent';
     
-    if (document.getElementById('file-list').children.length <= 1) {
-      loadRemoteFiles();
+    const inputEl = document.getElementById('file-path-input');
+    if (!inputEl.value || inputEl.value.includes('/var/mobile') || inputEl.value.includes('Downloads')) {
+      inputEl.value = '~';
     }
+    loadRemoteFiles();
   }
 }
 

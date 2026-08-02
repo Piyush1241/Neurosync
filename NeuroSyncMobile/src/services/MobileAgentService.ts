@@ -134,10 +134,14 @@ class MobileAgentService {
     try { await RNFS.mkdir(downloadsPath); } catch {}
     try { await RNFS.mkdir(picturesPath); } catch {}
 
-    // Ensure at least one welcome file exists in Documents for testing
+    // Ensure welcome sample files exist for immediate testing & transfer
     const sampleFile = `${docPath}/NeuroSync_Notes.txt`;
+    const sampleDownload = `${downloadsPath}/Welcome_Download_File.txt`;
     if (!(await RNFS.exists(sampleFile))) {
       try { await RNFS.writeFile(sampleFile, 'Welcome to NeuroSync Remote File Sharing!\nThis file is synced across your devices.', 'utf8'); } catch {}
+    }
+    if (!(await RNFS.exists(sampleDownload))) {
+      try { await RNFS.writeFile(sampleDownload, 'NeuroSync Mobile Download Folder\nYou can read, write, and transfer files here remotely.', 'utf8'); } catch {}
     }
 
     if (isRoot) {
@@ -150,6 +154,24 @@ class MobileAgentService {
       if (RNFS.CachesDirectoryPath) {
         rootEntries.push({ name: 'App Caches', path: RNFS.CachesDirectoryPath, type: 'folder', size: '—', modified: Date.now(), extension: '' });
       }
+
+      // Also read top-level files in docPath to include in root list
+      try {
+        const topItems = await RNFS.readDir(docPath);
+        for (const item of topItems) {
+          if (!item.isDirectory() && item.name !== 'Downloads' && item.name !== 'Pictures') {
+            rootEntries.push({
+              name: item.name,
+              path: item.path,
+              type: 'file',
+              size: this.formatSize(item.size),
+              size_bytes: item.size,
+              modified: item.mtime?.getTime() || Date.now(),
+              extension: item.name.includes('.') ? `.${item.name.split('.').pop()}` : ''
+            });
+          }
+        }
+      } catch {}
 
       return {
         status: 'success',

@@ -146,13 +146,13 @@ class MobileAgentService {
 
     if (isRoot) {
       const rootEntries: any[] = [
-        { name: 'Documents', path: docPath, type: 'folder', size: '—', modified: Date.now(), extension: '' },
-        { name: 'Downloads', path: downloadsPath, type: 'folder', size: '—', modified: Date.now(), extension: '' },
-        { name: 'Pictures', path: picturesPath, type: 'folder', size: '—', modified: Date.now(), extension: '' },
+        { name: 'Documents', path: '~/Documents', type: 'folder', size: '—', modified: Date.now(), extension: '' },
+        { name: 'Downloads', path: '~/Downloads', type: 'folder', size: '—', modified: Date.now(), extension: '' },
+        { name: 'Pictures', path: '~/Pictures', type: 'folder', size: '—', modified: Date.now(), extension: '' },
       ];
 
       if (RNFS.CachesDirectoryPath) {
-        rootEntries.push({ name: 'App Caches', path: RNFS.CachesDirectoryPath, type: 'folder', size: '—', modified: Date.now(), extension: '' });
+        rootEntries.push({ name: 'App Caches', path: '~/Caches', type: 'folder', size: '—', modified: Date.now(), extension: '' });
       }
 
       // Also read top-level files in docPath to include in root list
@@ -185,18 +185,24 @@ class MobileAgentService {
     let targetPath = dirPath;
     let displayPath = dirPath;
 
-    if (dirPath === 'Documents' || dirPath === '~/Documents') {
+    if (dirPath === 'Documents' || dirPath === '~/Documents' || dirPath === docPath) {
       targetPath = docPath;
       displayPath = '~/Documents';
-    } else if (dirPath === 'Downloads' || dirPath === '~/Downloads') {
+    } else if (dirPath === 'Downloads' || dirPath === '~/Downloads' || dirPath === downloadsPath || dirPath.endsWith('/Downloads')) {
       targetPath = downloadsPath;
       displayPath = '~/Downloads';
-    } else if (dirPath === 'Pictures' || dirPath === '~/Pictures') {
+    } else if (dirPath === 'Pictures' || dirPath === '~/Pictures' || dirPath === picturesPath || dirPath.endsWith('/Pictures')) {
       targetPath = picturesPath;
       displayPath = '~/Pictures';
+    } else if (dirPath === 'Caches' || dirPath === '~/Caches' || dirPath === RNFS.CachesDirectoryPath) {
+      targetPath = RNFS.CachesDirectoryPath || docPath;
+      displayPath = '~/Caches';
     } else if (dirPath === 'Desktop' || dirPath === '~/Desktop') {
       targetPath = docPath;
       displayPath = '~/Desktop';
+    } else if (dirPath.startsWith(docPath)) {
+      const rel = dirPath.substring(docPath.length);
+      displayPath = `~${rel}`;
     }
 
     if (!(await RNFS.exists(targetPath))) {

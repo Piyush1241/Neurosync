@@ -376,10 +376,67 @@ class KeyboardController:
 
     @staticmethod
     def take_screenshot_key() -> dict:
-        """Press PrintScreen."""
+        """Press screenshot hotkey (PrintScreen on Windows/Linux, Cmd+Shift+3 on macOS)."""
         try:
-            pyautogui.press("printscreen")
+            if platform.system() == "Darwin":
+                pyautogui.hotkey("command", "shift", "3")
+            else:
+                pyautogui.press("printscreen")
             return {"status": "success", "action": "screenshot"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @staticmethod
+    def take_screenshot(save_to_disk: bool = True) -> dict:
+        """Capture screen, save PNG file to Pictures/Screenshots, trigger OS screenshot key, and return base64 string."""
+        try:
+            import io
+            import base64
+            import datetime
+            import os
+            sys_name = platform.system()
+            
+            img = pyautogui.screenshot()
+            
+            saved_path = None
+            if save_to_disk:
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"NeuroSync_Screenshot_{timestamp}.png"
+                
+                if sys_name == "Windows":
+                    pictures_dir = os.path.expanduser("~/Pictures/Screenshots")
+                    if not os.path.exists(pictures_dir):
+                        pictures_dir = os.path.expanduser("~/Pictures")
+                elif sys_name == "Darwin":
+                    pictures_dir = os.path.expanduser("~/Desktop")
+                else:
+                    pictures_dir = os.path.expanduser("~/Pictures")
+                
+                os.makedirs(pictures_dir, exist_ok=True)
+                saved_path = os.path.join(pictures_dir, filename)
+                img.save(saved_path, format="PNG")
+
+                # Trigger OS screenshot key for visual/notification response
+                try:
+                    if sys_name == "Windows":
+                        pyautogui.press("printscreen")
+                    elif sys_name == "Darwin":
+                        pyautogui.hotkey("command", "shift", "3")
+                except Exception:
+                    pass
+
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            b64_str = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+            return {
+                "status": "success",
+                "action": "take_screenshot",
+                "width": img.width,
+                "height": img.height,
+                "saved_path": saved_path,
+                "base64": b64_str
+            }
         except Exception as e:
             return {"status": "error", "message": str(e)}
 

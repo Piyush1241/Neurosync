@@ -74,29 +74,32 @@ async def get_device(
 
 @router.get("/system/stats")
 async def get_system_stats(
+    device_id: str = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if _manager and _manager.connected_agents:
-        first_device_id = list(_manager.connected_agents.keys())[0]
-        m = _manager.get_device_metrics(first_device_id)
+    if device_id and _manager:
+        m = _manager.get_device_metrics(device_id)
         if m:
             return m
-    # Fallback if agent telemetry not yet received
-    import psutil, time, sys
-    vm = psutil.virtual_memory()
-    du = psutil.disk_usage('/') if sys.platform != 'win32' else psutil.disk_usage('C:\\')
-    uptime_sec = int(time.time() - psutil.boot_time())
+
+    if _manager:
+        user_devices = db.query(Device).filter(Device.user_id == current_user.user_id).all()
+        for d in user_devices:
+            m = _manager.get_device_metrics(d.device_id)
+            if m:
+                return m
+
     return {
-        "cpu": round(psutil.cpu_percent(interval=None), 1),
-        "ram": round(vm.percent, 1),
-        "ramTotal": round(vm.total / (1024 ** 3), 1),
-        "ramUsed": round(vm.used / (1024 ** 3), 1),
-        "disk": round(du.percent, 1),
-        "diskTotal": round(du.total / (1024 ** 3), 1),
-        "diskUsed": round(du.used / (1024 ** 3), 1),
-        "uptime": f"{uptime_sec // 3600}h {(uptime_sec % 3600) // 60}m",
-        "processes": len(psutil.pids()),
+        "cpu": 0.0,
+        "ram": 0.0,
+        "ramTotal": 0.0,
+        "ramUsed": 0.0,
+        "disk": 0.0,
+        "diskTotal": 0.0,
+        "diskUsed": 0.0,
+        "uptime": "Connecting...",
+        "processes": 0,
     }
 
 @router.get("/debug/token")

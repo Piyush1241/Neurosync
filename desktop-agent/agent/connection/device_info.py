@@ -65,7 +65,14 @@ def get_device_info() -> dict:
     if sys_name == "Darwin":
         os_disp = f"macOS {platform.mac_ver()[0]}"
     elif sys_name == "Windows":
-        os_disp = f"Windows {platform.release()}"
+        rel = platform.release()
+        try:
+            build = int(platform.version().split('.')[-1])
+            if build >= 22000:
+                rel = "11"
+        except Exception:
+            pass
+        os_disp = f"Windows {rel}"
     else:
         os_disp = f"{sys_name} {platform.release()}"
 

@@ -104,6 +104,12 @@ export default function DevicesScreen({navigation}: any) {
     AsyncStorage.getItem('device_id').then(id => {
       if (id) setMyDeviceId(id);
     });
+
+    const interval = setInterval(() => {
+      fetchDevicesQuietly();
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchDevices = async () => {
@@ -118,6 +124,15 @@ export default function DevicesScreen({navigation}: any) {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const fetchDevicesQuietly = async () => {
+    try {
+      const response = await api.get('/api/v1/devices');
+      setDevices(response.data.devices || response.data);
+    } catch (error) {
+      // Quiet poll fails silently without disrupting UI
     }
   };
 

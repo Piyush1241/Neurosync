@@ -109,7 +109,17 @@ class AIService:
         elif "lock" in p:
             steps.append({"action": "lock_screen"})
         elif "chrome" in p or "browser" in p:
-            steps.append({"action": "open_chrome"})
+            if "search" in p or "find" in p or "google" in p:
+                query = prompt
+                for kw in ["open chrome and ", "open chrome ", "search ", "google ", "in chrome ", "on chrome "]:
+                    query = query.replace(kw, "")
+                query = query.strip()
+                if query:
+                    steps.append({"action": "open_chrome", "payload": {"url": f"https://www.google.com/search?q={query}"}})
+                else:
+                    steps.append({"action": "open_chrome", "payload": {"url": "https://www.google.com"}})
+            else:
+                steps.append({"action": "open_chrome"})
         elif "explorer" in p or "files" in p or "my computer" in p:
             steps.append({"action": "open_explorer"})
         elif "running" in p or "process" in p or "task" in p:

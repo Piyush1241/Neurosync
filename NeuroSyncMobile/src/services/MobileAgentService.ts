@@ -1,8 +1,29 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { PermissionsAndroid, Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 
 const WS_URL = 'wss://neurosync-4giu.onrender.com/ws';
+
+async function requestStoragePermissions() {
+  if (Platform.OS === 'android') {
+    try {
+      if (Platform.Version >= 33) {
+        await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+        ]);
+      } else {
+        await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        ]);
+      }
+    } catch (e) {
+      console.warn('Storage permission error:', e);
+    }
+  }
+}
 
 class MobileAgentService {
   private ws: WebSocket | null = null;
@@ -13,6 +34,8 @@ class MobileAgentService {
     if (this.ws) {
       this.stop();
     }
+
+    await requestStoragePermissions();
 
     const token = await AsyncStorage.getItem('auth_token');
     if (!token) return;
@@ -122,47 +145,87 @@ class MobileAgentService {
     }
   }
 
+  private async getBestExistingPath(candidates: string[], fallback: string): Promise<string> {
+    for (const p of candidates) {
+      try {
+        if (p && (await RNFS.exists(p))) {
+          return p;
+        }
+      } catch {}
+    }
+    return fallback;
+  }
+
   private async listDir(dirPath: string) {
-    const extStorage = RNFS.ExternalStorageDirectoryPath; // /storage/emulated/0 on Android
     const docPath = RNFS.DocumentDirectoryPath;
-    const isAndroidExt = Platform.OS === 'android' && extStorage;
-    const baseStorage = isAndroidExt ? extStorage : docPath;
+    
+    // On Android, use /storage/emulated/0 as primary external storage
+    let extStorage = RNFS.ExternalStorageDirectoryPath;
+    if (Platform.OS === 'android') {
+      extStorage = extStorage || '/storage/emulated/0';
+    }
 
-    const isRoot = !dirPath || dirPath === '~' || dirPath === '/' || dirPath === 'ROOT' || dirPath.includes('Device Storage');
+    const baseStorage = (Platform.OS === 'android' && extStorage) ? extStorage : docPath;
+    const cleanPath = (dirPath || '').trim();
+    const isRoot = !cleanPath || cleanPath === '~' || cleanPath === '/' || cleanPath === 'ROOT' || cleanPath.includes('Device Storage');
 
-    let targetPath = dirPath;
-    let displayPath = dirPath;
+    let targetPath = cleanPath;
+    let displayPath = cleanPath;
 
     if (isRoot) {
       targetPath = baseStorage;
       displayPath = '~';
-    } else if (dirPath === 'Documents' || dirPath === '~/Documents' || dirPath === docPath) {
-      targetPath = isAndroidExt ? `${extStorage}/Documents` : docPath;
+
+      // List Root Shortcuts on Android/iOS
+      const rootEntries: any[] = [];
+      const dcimPath = await this.getBestExistingPath(['/storage/emulated/0/DCIM', '/sdcard/DCIM', `${baseStorage}/DCIM`], '');
+      const picsPath = await this.getBestExistingPath(['/storage/emulated/0/Pictures', '/sdcard/Pictures', `${baseStorage}/Pictures`], '');
+      const dlPath = await this.getBestExistingPath(['/storage/emulated/0/Download', '/storage/emulated/0/Downloads', '/sdcard/Download', RNFS.DownloadDirectoryPath || ''], '');
+      const docsPath = await this.getBestExistingPath(['/storage/emulated/0/Documents', '/sdcard/Documents', `${baseStorage}/Documents`], '');
+
+      if (dcimPath) rootEntries.push({ name: 'Camera (DCIM)', path: dcimPath, type: 'folder', size: '—' });
+      if (picsPath) rootEntries.push({ name: 'Pictures', path: picsPath, type: 'folder', size: '—' });
+      if (dlPath) rootEntries.push({ name: 'Downloads', path: dlPath, type: 'folder', size: '—' });
+      if (docsPath) rootEntries.push({ name: 'Documents', path: docsPath, type: 'folder', size: '—' });
+      
+      if (Platform.OS === 'android') {
+        rootEntries.push({ name: 'Internal Storage (/storage/emulated/0)', path: '/storage/emulated/0', type: 'folder', size: '—' });
+      }
+      rootEntries.push({ name: 'App Sandbox Documents', path: docPath, type: 'folder', size: '—' });
+
+      return {
+        status: 'success',
+        current_path: targetPath,
+        display_path: '~',
+        parent_path: '~',
+        entries: rootEntries
+      };
+    }
+
+    // Resolve shorthand paths like ~/Downloads, ~/Pictures, ~/Documents
+    if (cleanPath === 'Documents' || cleanPath === '~/Documents') {
+      targetPath = await this.getBestExistingPath(['/storage/emulated/0/Documents', '/sdcard/Documents', `${baseStorage}/Documents`, docPath], docPath);
       displayPath = '~/Documents';
-    } else if (dirPath === 'Downloads' || dirPath === '~/Downloads' || dirPath.endsWith('/Downloads') || dirPath.endsWith('/Download')) {
-      targetPath = isAndroidExt ? `${extStorage}/Download` : `${docPath}/Downloads`;
+    } else if (cleanPath === 'Downloads' || cleanPath === '~/Downloads' || cleanPath.endsWith('/Downloads') || cleanPath.endsWith('/Download')) {
+      targetPath = await this.getBestExistingPath(['/storage/emulated/0/Download', '/storage/emulated/0/Downloads', '/sdcard/Download', RNFS.DownloadDirectoryPath || '', `${baseStorage}/Download`, `${baseStorage}/Downloads`], docPath);
       displayPath = '~/Downloads';
-    } else if (dirPath === 'Pictures' || dirPath === '~/Pictures' || dirPath === 'DCIM' || dirPath === '~/DCIM') {
-      targetPath = isAndroidExt ? `${extStorage}/DCIM` : `${docPath}/Pictures`;
+    } else if (cleanPath === 'Pictures' || cleanPath === '~/Pictures' || cleanPath === 'DCIM' || cleanPath === '~/DCIM') {
+      targetPath = await this.getBestExistingPath(['/storage/emulated/0/DCIM', '/storage/emulated/0/Pictures', '/sdcard/DCIM', '/sdcard/Pictures', `${baseStorage}/DCIM`, `${baseStorage}/Pictures`], docPath);
       displayPath = '~/Pictures';
-    } else if (dirPath === 'Desktop' || dirPath === '~/Desktop') {
-      targetPath = isAndroidExt ? `${extStorage}/Desktop` : docPath;
+    } else if (cleanPath === 'Desktop' || cleanPath === '~/Desktop') {
+      targetPath = await this.getBestExistingPath(['/storage/emulated/0/Desktop', `${baseStorage}/Desktop`, docPath], docPath);
       displayPath = '~/Desktop';
-    } else if (dirPath.startsWith('~')) {
-      const rel = dirPath.substring(1);
+    } else if (cleanPath.startsWith('~')) {
+      const rel = cleanPath.substring(1);
       targetPath = `${baseStorage}${rel}`;
-      displayPath = dirPath;
-    } else if (dirPath.startsWith(baseStorage)) {
-      const rel = dirPath.substring(baseStorage.length);
+      displayPath = cleanPath;
+    } else if (cleanPath.startsWith(baseStorage)) {
+      const rel = cleanPath.substring(baseStorage.length);
       displayPath = rel ? `~${rel}` : '~';
     }
 
     if (!(await RNFS.exists(targetPath))) {
-      if (targetPath.includes('/DCIM')) {
-        targetPath = isAndroidExt ? `${extStorage}/Pictures` : docPath;
-      } else {
-        targetPath = baseStorage;
-      }
+      targetPath = baseStorage;
     }
 
     let items: any[] = [];
@@ -204,10 +267,12 @@ class MobileAgentService {
   }
 
   private getAbsolutePath(filePath: string): string {
-    const extStorage = RNFS.ExternalStorageDirectoryPath;
     const docPath = RNFS.DocumentDirectoryPath;
-    const isAndroidExt = Platform.OS === 'android' && extStorage;
-    const baseStorage = isAndroidExt ? extStorage : docPath;
+    let extStorage = RNFS.ExternalStorageDirectoryPath;
+    if (Platform.OS === 'android') {
+      extStorage = extStorage || '/storage/emulated/0';
+    }
+    const baseStorage = (Platform.OS === 'android' && extStorage) ? extStorage : docPath;
 
     if (!filePath || filePath === '~') return baseStorage;
     if (filePath.startsWith('~')) return `${baseStorage}${filePath.substring(1)}`;

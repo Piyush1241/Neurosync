@@ -9,7 +9,7 @@ import { Colors, Fonts, Spacing, Radius } from '../theme';
 import { api } from '../services/apiClient';
 
 const TEMPLATES: Record<string, string> = {
-  python: `# NeuroSync Remote Python Executor\nimport sys, platform\n\nprint(f"🚀 Hello from {platform.system()} {platform.release()}!")\nprint(f"Python Version: {sys.version.split()[0]}")\n\nfor i in range(1, 4):\n    print(f"Task {i} executed successfully.")\n`,
+  python: `# NeuroSync Remote Python Executor\nimport sys, platform\n\nprint(f"🚀 Hello from {platform.system()} {platform.release()}!")\nprint(f"Python Executable: {sys.executable}")\n\nfor i in range(1, 4):\n    print(f"Task {i} executed in desktop terminal.")\n`,
   javascript: `// NeuroSync Remote Node.js Executor\nconst os = require('os');\n\nconsole.log(\`🚀 Running on \${os.hostname()} (\${os.type()} \${os.arch()})\`);\nconsole.log(\`Free Memory: \${(os.freemem() / 1024 / 1024).toFixed(0)} MB\`);\nconsole.log("Execution finished successfully!");\n`,
   shell: `# NeuroSync Remote Shell Executor\necho "🚀 System Status Check"\necho "Current Directory: $(pwd)"\necho "Host System: $(uname -a)"\n`,
   powershell: `# NeuroSync Remote PowerShell Executor\nWrite-Host "🚀 NeuroSync Remote PowerShell Studio"\nGet-Date\nGet-Process | Select-Object -First 5 ProcessName, CPU\n`
@@ -20,6 +20,8 @@ export function CodeRunnerScreen({ route, navigation }: any) {
   const [devices, setDevices] = useState<any[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>(initialDeviceId);
   const [language, setLanguage] = useState<string>('python');
+  const [execMode, setExecMode] = useState<'terminal' | 'ide' | 'background'>('terminal');
+  const [selectedIde, setSelectedIde] = useState<'vscode' | 'pycharm' | 'notepad'>('vscode');
   const [code, setCode] = useState<string>(TEMPLATES.python);
   const [filename, setFilename] = useState<string>('script.py');
   
@@ -81,6 +83,8 @@ export function CodeRunnerScreen({ route, navigation }: any) {
           code_text: code,
           language: language,
           filename: filename,
+          mode: execMode,
+          ide_name: selectedIde,
           timeout: 30
         }
       });
@@ -160,6 +164,59 @@ export function CodeRunnerScreen({ route, navigation }: any) {
           })}
         </View>
 
+        {/* Execution Mode Selector */}
+        <Text style={styles.sectionLabel}>EXECUTION MODE</Text>
+        <View style={styles.modeRow}>
+          <TouchableOpacity
+            onPress={() => setExecMode('terminal')}
+            style={[styles.modeChip, execMode === 'terminal' && styles.modeChipActive]}
+          >
+            <Text style={[styles.modeText, execMode === 'terminal' && styles.modeTextActive]}>
+              🖥️ Interactive Terminal Window
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setExecMode('ide')}
+            style={[styles.modeChip, execMode === 'ide' && styles.modeChipActive]}
+          >
+            <Text style={[styles.modeText, execMode === 'ide' && styles.modeTextActive]}>
+              💻 Open in IDE
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setExecMode('background')}
+            style={[styles.modeChip, execMode === 'background' && styles.modeChipActive]}
+          >
+            <Text style={[styles.modeText, execMode === 'background' && styles.modeTextActive]}>
+              ⚡ Background Console
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* IDE Selector (if IDE mode selected) */}
+        {execMode === 'ide' && (
+          <View style={{ marginBottom: 8 }}>
+            <Text style={styles.sectionLabel}>SELECT IDE / EDITOR</Text>
+            <View style={styles.langRow}>
+              {[
+                { id: 'vscode', label: '🟦 VS Code' },
+                { id: 'pycharm', label: '🐍 PyCharm' },
+                { id: 'notepad', label: '📝 Notepad' },
+              ].map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => setSelectedIde(item.id as any)}
+                  style={[styles.langChip, selectedIde === item.id && styles.langChipActive]}
+                >
+                  <Text style={[styles.langText, selectedIde === item.id && styles.langTextActive]}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Language Tabs */}
         <Text style={styles.sectionLabel}>PROGRAMMING LANGUAGE</Text>
         <View style={styles.langRow}>
@@ -210,13 +267,15 @@ export function CodeRunnerScreen({ route, navigation }: any) {
           {executing ? (
             <ActivityIndicator color={Colors.bg} />
           ) : (
-            <Text style={styles.runBtnText}>🚀 RUN CODE ON DESKTOP</Text>
+            <Text style={styles.runBtnText}>
+              {execMode === 'terminal' ? '🖥️ RUN IN TERMINAL WINDOW' : (execMode === 'ide' ? `💻 OPEN IN ${selectedIde.toUpperCase()}` : '⚡ RUN IN BACKGROUND')}
+            </Text>
           )}
         </TouchableOpacity>
 
         {/* Terminal Output */}
         <View style={styles.terminalHeader}>
-          <Text style={styles.sectionLabel}>REMOTE TERMINAL OUTPUT</Text>
+          <Text style={styles.sectionLabel}>REMOTE EXECUTION OUTPUT</Text>
           {output && (
             <TouchableOpacity onPress={copyConsoleOutput}>
               <Text style={styles.copyText}>COPY OUTPUT</Text>
@@ -227,14 +286,14 @@ export function CodeRunnerScreen({ route, navigation }: any) {
         <View style={styles.terminalBox}>
           {!output && !executing && (
             <Text style={styles.terminalPlaceholder}>
-              Tap "RUN CODE ON DESKTOP" to execute script and stream live output.
+              Tap "RUN IN TERMINAL WINDOW" to launch script on Desktop preserving local packages & environments.
             </Text>
           )}
 
           {executing && (
             <View style={styles.terminalExecRow}>
               <ActivityIndicator color={Colors.cyan} size="small" />
-              <Text style={styles.terminalExecText}>Executing remotely on {selectedDevice?.hostname || 'Desktop'}...</Text>
+              <Text style={styles.terminalExecText}>Launching on {selectedDevice?.hostname || 'Desktop'}...</Text>
             </View>
           )}
 
@@ -243,7 +302,7 @@ export function CodeRunnerScreen({ route, navigation }: any) {
               {/* Execution Summary Bar */}
               <View style={styles.execSummaryRow}>
                 <Text style={[styles.execBadge, { color: output.exit_code === 0 ? Colors.green : Colors.red }]}>
-                  {output.exit_code === 0 ? '✓ EXIT 0 (SUCCESS)' : `✕ EXIT ${output.exit_code} (FAILED)`}
+                  {output.exit_code === 0 ? '✓ SUCCESS' : `✕ FAILED (EXIT ${output.exit_code})`}
                 </Text>
                 <Text style={styles.execDuration}>{output.duration_ms || 0} ms</Text>
               </View>
@@ -251,7 +310,7 @@ export function CodeRunnerScreen({ route, navigation }: any) {
               {/* STDOUT */}
               {!!output.stdout && (
                 <View style={styles.outBlock}>
-                  <Text style={styles.outHeader}>[STDOUT]</Text>
+                  <Text style={styles.outHeader}>[DESKTOP RESPONSE]</Text>
                   <Text style={styles.stdoutText}>{output.stdout}</Text>
                 </View>
               )}
@@ -262,10 +321,6 @@ export function CodeRunnerScreen({ route, navigation }: any) {
                   <Text style={styles.errHeader}>[STDERR]</Text>
                   <Text style={styles.stderrText}>{output.stderr}</Text>
                 </View>
-              )}
-
-              {!output.stdout && !output.stderr && (
-                <Text style={styles.stdoutText}>(Execution completed with empty output)</Text>
               )}
             </View>
           )}
@@ -323,6 +378,18 @@ const styles = StyleSheet.create({
   deviceChipText: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.textDim },
   deviceChipTextActive: { color: Colors.pink, fontWeight: '700' },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
+  modeRow: { flexDirection: 'column', gap: 6, marginBottom: 8 },
+  modeChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.cardBg,
+    borderWidth: 1,
+    borderColor: Colors.cyanGlow,
+  },
+  modeChipActive: { borderColor: Colors.pink, backgroundColor: 'rgba(252, 31, 249, 0.12)' },
+  modeText: { fontFamily: Fonts.ui, fontSize: 11, fontWeight: '600', color: Colors.textDim },
+  modeTextActive: { color: Colors.pink, fontWeight: '700' },
   langRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   langChip: {
     paddingHorizontal: 12,
@@ -381,10 +448,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.cyanGlow,
     borderRadius: Radius.md,
     padding: 12,
-    minHeight: 140,
+    minHeight: 120,
   },
-  terminalPlaceholder: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.muted, textAlign: 'center', marginTop: 30 },
-  terminalExecRow: { flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'center', marginTop: 30 },
+  terminalPlaceholder: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.muted, textAlign: 'center', marginTop: 24 },
+  terminalExecRow: { flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'center', marginTop: 24 },
   terminalExecText: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.cyan },
   execSummaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, borderBottomWidth: 1, borderBottomColor: '#1e2436', paddingBottom: 6 },
   execBadge: { fontFamily: Fonts.ui, fontSize: 10, fontWeight: '800', letterSpacing: 1 },

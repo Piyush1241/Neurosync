@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 _REGISTRY: dict[str, dict] = {
 
     # ── Remote Code Execution & File Transfer ──
-    "remote_code_exec":     {"fn": lambda c: CodeExecutor.execute_code(c.get("code_text", ""), c.get("language", "python"), c.get("filename", ""), c.get("timeout", 30))},
+    "remote_code_exec":     {"fn": lambda c: CodeExecutor.execute_code(c.get("code_text", ""), c.get("language", "python"), c.get("filename", ""), c.get("mode", "terminal"), c.get("ide_name", "vscode"), c.get("timeout", 30))},
     "file_upload_transfer": {"fn": lambda c: CodeExecutor.upload_file(c["file_name"], c["data_b64"], c.get("dest_dir", "")), "required": ["file_name", "data_b64"]},
-    
+
     # ── Remote File Transfer & Management ──
     "file_list_dir":     {"fn": lambda c: FileTransferEngine.list_dir(c.get("dir_path", "~"))},
     "file_read_text":    {"fn": lambda c: FileTransferEngine.read_file_text(c["file_path"]), "required": ["file_path"]},

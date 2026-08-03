@@ -172,9 +172,14 @@ export default function DevicesScreen({navigation}: any) {
 
       <View style={s.sectionRow}>
         <Text style={s.sectionLabel}>YOUR DEVICES</Text>
-        <TouchableOpacity onPress={handleRefresh}>
-          <Text style={s.refresh}>↻ REFRESH</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => navigation.navigate('CodeRunner')}>
+            <Text style={{ fontFamily: Fonts.ui, fontSize: 10, color: Colors.pink, fontWeight: '700', letterSpacing: 1 }}>💻 CODE STUDIO</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleRefresh}>
+            <Text style={s.refresh}>↻ REFRESH</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading ? (

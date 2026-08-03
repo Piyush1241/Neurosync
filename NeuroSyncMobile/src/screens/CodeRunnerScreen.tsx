@@ -462,3 +462,5 @@ const styles = StyleSheet.create({
   stdoutText: { fontFamily: Fonts.mono, fontSize: 11, color: '#00ff88', lineHeight: 18 },
   stderrText: { fontFamily: Fonts.mono, fontSize: 11, color: '#ff3d3d', lineHeight: 18 },
 });
+
+export default CodeRunnerScreen;

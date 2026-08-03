@@ -125,6 +125,30 @@ export default function RemoteDashboardScreen({navigation, route}: any) {
       <HudDivider />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: 'rgba(252, 31, 249, 0.1)',
+            borderWidth: 1,
+            borderColor: Colors.pink,
+            borderRadius: Radius.md,
+            padding: 14,
+            marginBottom: 16
+          }}
+          onPress={() => navigation.navigate('CodeRunner', { deviceId })}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Text style={{ fontSize: 20 }}>💻</Text>
+            <View>
+              <Text style={{ fontFamily: Fonts.ui, fontSize: 13, fontWeight: '800', color: Colors.pink, letterSpacing: 1 }}>REMOTE CODE STUDIO</Text>
+              <Text style={{ fontFamily: Fonts.mono, fontSize: 10, color: Colors.textMuted }}>Execute scripts in Terminal or IDE</Text>
+            </View>
+          </View>
+          <Text style={{ color: Colors.pink, fontFamily: Fonts.ui, fontSize: 16, fontWeight: '700' }}>→</Text>
+        </TouchableOpacity>
+
         <Text style={styles.sectionLabel}>LAUNCH APPS</Text>
         <View style={styles.cmdList}>
           {LAUNCH_COMMANDS.map(cmd => (

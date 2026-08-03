@@ -228,11 +228,19 @@ class MobileAgentService {
       targetPath = baseStorage;
     }
 
+    // Filter restricted Android OS system folders (Android/data, Android/obb)
+    const isRestrictedAndroidSys = Platform.OS === 'android' && (targetPath.endsWith('/Android/data') || targetPath.endsWith('/Android/obb') || targetPath.includes('/Android/data/') || targetPath.includes('/Android/obb/'));
+
     let items: any[] = [];
-    try {
-      items = await RNFS.readDir(targetPath);
-    } catch (e: any) {
-      return { status: 'error', message: `Access Denied: ${e.message || 'Cannot access directory'}` };
+    if (!isRestrictedAndroidSys) {
+      try {
+        const res = await RNFS.readDir(targetPath);
+        if (res && Array.isArray(res)) {
+          items = res;
+        }
+      } catch (e: any) {
+        console.warn('Directory read warning:', e);
+      }
     }
 
     const entries = items.map(item => ({
@@ -244,6 +252,18 @@ class MobileAgentService {
       modified: item.mtime?.getTime() || Date.now(),
       extension: item.name.includes('.') ? `.${item.name.split('.').pop()}` : ''
     }));
+
+    if (isRestrictedAndroidSys || (entries.length === 0 && (targetPath.includes('/Android/data') || targetPath.includes('/Android/obb')))) {
+      entries.push({
+        name: '🔒 Protected System Folder (Restricted by Android Scoped Storage)',
+        path: targetPath,
+        type: 'file',
+        size: '—',
+        size_bytes: 0,
+        modified: Date.now(),
+        extension: ''
+      });
+    }
 
     entries.sort((a, b) => {
       if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;

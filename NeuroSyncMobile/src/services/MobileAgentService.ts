@@ -12,13 +12,11 @@ class MobileAgentService {
   public async start() {
     if (this.ws) {
       this.stop();
-
     }
 
     const token = await AsyncStorage.getItem('auth_token');
     if (!token) return;
 
-    // Generate a unique device ID for the mobile device
     let savedDeviceId = await AsyncStorage.getItem('device_id');
     if (!savedDeviceId) {
       savedDeviceId = `mobile-${Math.random().toString(36).substring(2, 11)}`;
@@ -30,7 +28,7 @@ class MobileAgentService {
 
     this.ws.onopen = () => {
       console.log('Mobile Agent connected to WS');
-
+      
       const osVersion = Platform.Version.toString();
       const osName = Platform.OS === 'ios' ? 'iOS' : 'Android';
 
@@ -46,7 +44,7 @@ class MobileAgentService {
         cpu: 'ARM',
         ram_gb: 4
       };
-
+      
       this.ws?.send(JSON.stringify(authMessage));
 
       this.heartbeatInterval = setInterval(() => {
@@ -81,7 +79,6 @@ class MobileAgentService {
     this.ws.onclose = () => {
       console.log('Mobile Agent WS Closed');
       this.stop();
-      // Attempt reconnect after 5 seconds
       setTimeout(() => this.start(), 5000);
     };
   }
@@ -160,12 +157,13 @@ class MobileAgentService {
       displayPath = rel ? `~${rel}` : '~';
     }
 
-    // Ensure directory exists if it's a standard subfolder
-    try {
-      if (!(await RNFS.exists(targetPath))) {
-        await RNFS.mkdir(targetPath);
+    if (!(await RNFS.exists(targetPath))) {
+      if (targetPath.includes('/DCIM')) {
+        targetPath = isAndroidExt ? `${extStorage}/Pictures` : docPath;
+      } else {
+        targetPath = baseStorage;
       }
-    } catch { }
+    }
 
     let items: any[] = [];
     try {
@@ -176,7 +174,7 @@ class MobileAgentService {
 
     const entries = items.map(item => ({
       name: item.name,
-      path: item.path.startsWith(baseStorage) ? `~${item.path.substring(baseStorage.length)}` : item.path,
+      path: item.path,
       type: item.isDirectory() ? 'folder' : 'file',
       size: item.isDirectory() ? '—' : this.formatSize(item.size),
       size_bytes: item.size,
@@ -184,7 +182,6 @@ class MobileAgentService {
       extension: item.name.includes('.') ? `.${item.name.split('.').pop()}` : ''
     }));
 
-    // Sort: folders first, then alphabetical
     entries.sort((a, b) => {
       if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
       return a.name.localeCompare(b.name);
@@ -193,8 +190,8 @@ class MobileAgentService {
     const isTop = targetPath === baseStorage || displayPath === '~';
     let parentPath = '~';
     if (!isTop) {
-      const lastSlash = displayPath.lastIndexOf('/');
-      parentPath = lastSlash > 0 ? displayPath.substring(0, lastSlash) : '~';
+      const lastSlash = targetPath.lastIndexOf('/');
+      parentPath = lastSlash > 0 ? targetPath.substring(0, lastSlash) : '~';
     }
 
     return {
@@ -218,23 +215,23 @@ class MobileAgentService {
   }
 
   private async readText(filePath: string) {
-    const target = this.getAbsolutePath(filePath);
-    if (!(await RNFS.exists(target))) return { status: 'error', message: 'File not found' };
-    const content = await RNFS.readFile(target, 'utf8');
+    const absPath = this.getAbsolutePath(filePath);
+    if (!(await RNFS.exists(absPath))) return { status: 'error', message: 'File not found' };
+    const content = await RNFS.readFile(absPath, 'utf8');
     return { status: 'success', content };
   }
 
   private async saveText(filePath: string, content: string) {
-    const target = this.getAbsolutePath(filePath);
-    await RNFS.writeFile(target, content, 'utf8');
+    const absPath = this.getAbsolutePath(filePath);
+    await RNFS.writeFile(absPath, content, 'utf8');
     return { status: 'success' };
   }
 
   private async readChunk(filePath: string, chunkIndex: number) {
-    const target = this.getAbsolutePath(filePath);
-    if (!(await RNFS.exists(target))) return { status: 'error', message: 'File not found' };
+    const absPath = this.getAbsolutePath(filePath);
+    if (!(await RNFS.exists(absPath))) return { status: 'error', message: 'File not found' };
 
-    const stat = await RNFS.stat(target);
+    const stat = await RNFS.stat(absPath);
     const CHUNK_SIZE = 512 * 1024; // 512KB
     const totalSize = parseInt(stat.size.toString(), 10);
     const totalChunks = Math.ceil(totalSize / CHUNK_SIZE) || 1;
@@ -245,8 +242,8 @@ class MobileAgentService {
 
     const offset = chunkIndex * CHUNK_SIZE;
     const lengthToRead = Math.min(CHUNK_SIZE, totalSize - offset);
-
-    const chunkB64 = await RNFS.read(target, lengthToRead, offset, 'base64');
+    
+    const chunkB64 = await RNFS.read(absPath, lengthToRead, offset, 'base64');
 
     return {
       status: 'success',

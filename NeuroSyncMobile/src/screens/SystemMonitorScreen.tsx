@@ -37,17 +37,23 @@ const DUMMY: SystemStats = {
   uptime: '2h 34m', processes: 187,
 };
 
-export default function SystemMonitorScreen({ navigation }: any) {
+export default function SystemMonitorScreen({ navigation, route }: any) {
+  const device = route.params?.device || {};
+  const deviceId = device.device_id || device.id;
+
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('');
 
   const fetchStats = async () => {
     try {
-      const res = await api.get('/system/stats');
-      setStats(res.data);
-    } catch {
-      setStats(DUMMY);
+      const path = deviceId ? `/api/v1/system/stats?device_id=${deviceId}` : '/api/v1/system/stats';
+      const res = await api.get(path);
+      if (res.data) {
+        setStats(res.data);
+      }
+    } catch (e) {
+      console.log('System monitor stats fetch error:', e);
     }
     setLastUpdated(new Date().toLocaleTimeString());
   };
@@ -60,7 +66,7 @@ export default function SystemMonitorScreen({ navigation }: any) {
 
   useEffect(() => {
     fetchStats();
-    const t = setInterval(fetchStats, 5000);
+    const t = setInterval(fetchStats, 4000);
     return () => clearInterval(t);
   }, []);
 

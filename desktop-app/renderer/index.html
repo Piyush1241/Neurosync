@@ -515,19 +515,38 @@
 
   <!-- FILE EXPLORER (Hidden by default) -->
   <div class="panel" id="view-files" style="grid-column: 2 / 4; grid-row: 1 / 3; display: none; flex-direction: column;">
-    <div class="section-label">REMOTE FILE EXPLORER</div>
+    <div class="section-label">REMOTE FILE EXPLORER (2-WAY CONNECTIVITY)</div>
+
+    <!-- DEVICE SELECTOR BAR -->
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; background: var(--bg-elevated); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--cyan-border); flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+        <span style="font-family: var(--font-ui); font-size: 11px; font-weight: 700; color: var(--pink); letter-spacing: 1px;">TARGET DEVICE:</span>
+        <select id="remote-device-select" onchange="onDeviceSelectChanged()" style="flex: 1; max-width: 320px; background: var(--bg); color: var(--text); border: 1px solid var(--cyan-border); padding: 6px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">
+          <option value="">Loading registered devices...</option>
+        </select>
+        <span id="remote-device-badge" style="font-family: var(--font-ui); font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 12px; background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid var(--green);">ONLINE</span>
+      </div>
+      <button onclick="refreshDeviceList(true)" style="background: transparent; border: 1px solid var(--cyan-border); color: var(--cyan); padding: 5px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 10px; cursor: pointer; transition: all 0.2s;">↻ REFRESH DEVICES</button>
+    </div>
+
+    <!-- QUICK SHORTCUTS BAR -->
     <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
       <button onclick="setRemotePath('~')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">🏠 Device Home (~)</button>
       <button onclick="setRemotePath('~/Documents')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">📁 Documents</button>
       <button onclick="setRemotePath('~/Downloads')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">📥 Downloads</button>
+      <button onclick="setRemotePath('~/Pictures')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">🖼️ Pictures</button>
       <button onclick="setRemotePath('~/Desktop')" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">🖥️ Desktop</button>
     </div>
+
+    <!-- PATH INPUT & GO -->
     <div style="display: flex; gap: 10px; margin-bottom: 12px;">
       <input type="text" id="file-path-input" value="~" style="flex: 1; background: var(--bg); border: 1px solid var(--cyan-border); color: var(--text); font-family: var(--font-mono); padding: 8px 12px; border-radius: 8px;" />
       <button onclick="loadRemoteFiles()" style="background: var(--pink-glow); border: 1px solid var(--pink); color: var(--pink); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: var(--font-ui); font-weight: 600; transition: all 0.2s;">GO</button>
     </div>
+
+    <!-- FILE LIST AREA -->
     <div id="file-list" style="flex: 1; overflow-y: auto; background: var(--bg); border: 1px solid var(--cyan-border); border-radius: 8px; padding: 12px;">
-      <div style="color: var(--text-dim); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Enter a device ID and path to browse</div>
+      <div style="color: var(--text-dim); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Select a registered device above to browse its files</div>
     </div>
   </div>
 
@@ -642,6 +661,92 @@ function customPrompt(message, defaultValue) {
 
 // --- Remote File Explorer ---
 let currentRemotePath = '~';
+let cachedDevices = [];
+
+async function refreshDeviceList(autoLoadSelected = false) {
+  const selectEl = document.getElementById('remote-device-select');
+  const badgeEl = document.getElementById('remote-device-badge');
+
+  try {
+    if (window.electronAPI && window.electronAPI.getDevices) {
+      cachedDevices = await window.electronAPI.getDevices();
+    }
+  } catch (e) {
+    console.warn('Could not fetch registered devices:', e);
+  }
+
+  if (!selectEl) return;
+
+  if (!cachedDevices || cachedDevices.length === 0) {
+    selectEl.innerHTML = '<option value="">No registered devices found</option>';
+    if (badgeEl) {
+      badgeEl.textContent = 'NO DEVICES';
+      badgeEl.style.color = 'var(--text-dim)';
+      badgeEl.style.borderColor = 'var(--text-dim)';
+    }
+    return;
+  }
+
+  let lastSavedId = localStorage.getItem('lastMobileId') || '';
+  selectEl.innerHTML = '';
+
+  let hasSelected = false;
+  cachedDevices.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.device_id;
+    const isMobile = d.device_id.startsWith('mobile-') || (d.os && (d.os.includes('iOS') || d.os.includes('Android')));
+    const icon = isMobile ? '📱' : '🖥️';
+    const statusStr = (d.status || 'offline').toUpperCase();
+    opt.textContent = `${icon} ${d.hostname || d.username || 'Device'} (${d.os || 'OS'}) [${statusStr}]`;
+    if (d.device_id === lastSavedId) {
+      opt.selected = true;
+      hasSelected = true;
+    }
+    selectEl.appendChild(opt);
+  });
+
+  if (!hasSelected && cachedDevices.length > 0) {
+    selectEl.options[0].selected = true;
+    localStorage.setItem('lastMobileId', cachedDevices[0].device_id);
+  }
+
+  updateSelectedDeviceStatus();
+
+  if (autoLoadSelected) {
+    loadRemoteFiles();
+  }
+}
+
+function updateSelectedDeviceStatus() {
+  const selectEl = document.getElementById('remote-device-select');
+  const badgeEl = document.getElementById('remote-device-badge');
+  if (!selectEl || !badgeEl) return;
+
+  const selectedId = selectEl.value;
+  const dev = cachedDevices.find(d => d.device_id === selectedId);
+
+  if (dev) {
+    const isOnline = dev.status === 'online';
+    badgeEl.textContent = isOnline ? 'ONLINE' : 'OFFLINE';
+    badgeEl.style.color = isOnline ? 'var(--green)' : 'var(--red)';
+    badgeEl.style.borderColor = isOnline ? 'var(--green)' : 'var(--red)';
+    badgeEl.style.background = isOnline ? 'rgba(0,255,136,0.1)' : 'rgba(255,61,61,0.1)';
+  } else {
+    badgeEl.textContent = 'UNKNOWN';
+    badgeEl.style.color = 'var(--text-dim)';
+    badgeEl.style.borderColor = 'var(--text-dim)';
+  }
+}
+
+function onDeviceSelectChanged() {
+  const selectEl = document.getElementById('remote-device-select');
+  const selectedId = selectEl ? selectEl.value : '';
+  if (selectedId) {
+    localStorage.setItem('lastMobileId', selectedId);
+    updateSelectedDeviceStatus();
+    loadRemoteFiles();
+  }
+}
 
 function setRemotePath(path) {
   const input = document.getElementById('file-path-input');
@@ -653,40 +758,40 @@ async function loadRemoteFiles() {
   const input = document.getElementById('file-path-input');
   const path = input.value || '~';
   const listEl = document.getElementById('file-list');
-  
-  listEl.innerHTML = '<div style="color: var(--pink); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Loading devices...</div>';
-  
+  const selectEl = document.getElementById('remote-device-select');
+
+  let targetDeviceId = selectEl ? selectEl.value : (localStorage.getItem('lastMobileId') || '');
+
+  if (!targetDeviceId) {
+    listEl.innerHTML = '<div style="color: var(--yellow); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 30px;">Please select a registered device from the dropdown above to browse its files.</div>';
+    return;
+  }
+
+  // Check if target device is known to be offline
+  const dev = cachedDevices.find(d => d.device_id === targetDeviceId);
+  if (dev && dev.status !== 'online') {
+    const isMobile = targetDeviceId.startsWith('mobile-') || (dev.os && (dev.os.includes('iOS') || dev.os.includes('Android')));
+    const devName = (dev.hostname || dev.username || 'Device').toUpperCase();
+    listEl.innerHTML = `
+      <div style="text-align: center; margin-top: 40px; padding: 20px;">
+        <div style="font-size: 36px; margin-bottom: 12px;">${isMobile ? '📱' : '🖥️'} ⚡</div>
+        <div style="color: var(--yellow); font-family: var(--font-ui); font-weight: 700; font-size: 13px; letter-spacing: 1px; margin-bottom: 8px;">
+          ${devName} IS CURRENTLY OFFLINE
+        </div>
+        <div style="color: var(--text-dim); font-family: var(--font-mono); font-size: 11px; max-width: 440px; margin: 0 auto 18px; line-height: 1.6;">
+          ${isMobile ? 'Open the NeuroSync Mobile App on your phone to connect it to the server.' : 'Ensure the desktop agent is running on the remote device.'}
+        </div>
+        <button onclick="refreshDeviceList(true)" style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan-border); color: var(--cyan); padding: 6px 14px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">↻ Refresh Devices</button>
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = '<div style="color: var(--pink); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Connecting to device...</div>';
+
   try {
-    let targetDeviceId = localStorage.getItem('lastMobileId') || '';
-
-    // Fetch registered devices from backend
-    if (window.electronAPI.getDevices) {
-      try {
-        const devices = await window.electronAPI.getDevices();
-        if (devices && devices.length > 0) {
-          const deviceListStr = devices.map(d => `• ${d.hostname || d.device_id} [${d.status.toUpperCase()}] -> ID: ${d.device_id}`).join('\n');
-          const defaultId = targetDeviceId || devices[0].device_id;
-          const chosen = await customPrompt(`Available Registered Devices:\n${deviceListStr}\n\nEnter Device ID to connect to:`, defaultId);
-          if (chosen) targetDeviceId = chosen.trim();
-        }
-      } catch (e) {
-        console.warn('Could not fetch devices list:', e);
-      }
-    }
-
-    if (!targetDeviceId) {
-      targetDeviceId = await customPrompt("Enter the Device ID to connect to:", targetDeviceId);
-    }
-
-    if (!targetDeviceId) {
-      listEl.innerHTML = '<div style="color: var(--red); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Device ID required</div>';
-      return;
-    }
-    localStorage.setItem('lastMobileId', targetDeviceId);
-
-    listEl.innerHTML = '<div style="color: var(--pink); font-family: var(--font-mono); font-size: 12px; text-align: center; margin-top: 20px;">Connecting to device...</div>';
     const res = await window.electronAPI.sendCommand(targetDeviceId, 'file_list_dir', { dir_path: path });
-    
+
     if (res.status === 'success') {
       currentRemotePath = res.current_path;
       input.value = res.display_path || res.current_path;

@@ -374,3 +374,205 @@ class AppLauncher:
         except psutil.NoSuchProcess:
             del cls._launched[label]
             return {"status": "success", "running": False}
+
+    # ── System Info, Processes & Power Controls (Cross-Platform) ────────────
+
+    @classmethod
+    def get_running_processes(cls, limit: int = 50) -> dict:
+        """Return list of top running processes for Windows, macOS, and Linux."""
+        try:
+            procs = []
+            for p in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent', 'username']):
+                try:
+                    info = p.info
+                    procs.append({
+                        "pid": info['pid'],
+                        "name": info['name'] or 'Unknown',
+                        "cpu_percent": info['cpu_percent'] or 0.0,
+                        "memory_percent": round(info['memory_percent'] or 0.0, 2),
+                        "username": info.get('username') or ''
+                    })
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    continue
+
+            procs.sort(key=lambda x: x['cpu_percent'], reverse=True)
+            return {
+                "status": "success",
+                "total_processes": len(procs),
+                "processes": procs[:limit]
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @classmethod
+    def get_system_info(cls) -> dict:
+        """Return hardware specs, OS version, and resource usage for Windows, macOS, and Linux."""
+        try:
+            import time
+            vm = psutil.virtual_memory()
+            sys_platform = platform.system()
+            disk_path = '/' if sys_platform != 'win32' else 'C:\\'
+            du = psutil.disk_usage(disk_path)
+            boot_time = psutil.boot_time()
+            uptime_sec = int(time.time() - boot_time)
+
+            return {
+                "status": "success",
+                "platform": sys_platform,
+                "os_release": platform.release(),
+                "os_version": platform.version(),
+                "architecture": platform.machine(),
+                "processor": platform.processor() or sys_platform,
+                "hostname": platform.node(),
+                "cpu_count_logical": psutil.cpu_count(logical=True),
+                "cpu_count_physical": psutil.cpu_count(logical=False),
+                "cpu_percent": round(psutil.cpu_percent(interval=0.1), 1),
+                "ram_total_gb": round(vm.total / (1024 ** 3), 2),
+                "ram_used_gb": round(vm.used / (1024 ** 3), 2),
+                "ram_percent": round(vm.percent, 1),
+                "disk_total_gb": round(du.total / (1024 ** 3), 2),
+                "disk_used_gb": round(du.used / (1024 ** 3), 2),
+                "disk_percent": round(du.percent, 1),
+                "uptime_hours": round(uptime_sec / 3600, 2),
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @classmethod
+    def shutdown_system(cls) -> dict:
+        """Initiate system shutdown cross-platform."""
+        sys_name = cls._system()
+        try:
+            if sys_name == "Windows":
+                subprocess.Popen(["shutdown", "/s", "/t", "5"])
+            elif sys_name == "Darwin":
+                subprocess.Popen(["osascript", "-e", 'tell application "System Events" to shut down'])
+            elif sys_name == "Linux":
+                subprocess.Popen(["shutdown", "-h", "now"])
+            return {"status": "success", "message": f"Shutdown initiated on {sys_name}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @classmethod
+    def restart_system(cls) -> dict:
+        """Initiate system restart cross-platform."""
+        sys_name = cls._system()
+        try:
+            if sys_name == "Windows":
+                subprocess.Popen(["shutdown", "/r", "/t", "5"])
+            elif sys_name == "Darwin":
+                subprocess.Popen(["osascript", "-e", 'tell application "System Events" to restart'])
+            elif sys_name == "Linux":
+                subprocess.Popen(["shutdown", "-r", "now"])
+            return {"status": "success", "message": f"Restart initiated on {sys_name}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @classmethod
+    def sleep_system(cls) -> dict:
+        """Put system to sleep cross-platform."""
+        sys_name = cls._system()
+        try:
+            if sys_name == "Windows":
+                subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"])
+            elif sys_name == "Darwin":
+                subprocess.Popen(["pmset", "sleepnow"])
+            elif sys_name == "Linux":
+                subprocess.Popen(["systemctl", "suspend"])
+            return {"status": "success", "message": f"Sleep initiated on {sys_name}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @classmethod
+    def get_windows(cls) -> dict:
+        """Return list of active visible window titles cross-platform."""
+        sys_name = cls._system()
+        windows = []
+        try:
+            if sys_name == "Windows":
+                try:
+                    import pygetwindow as gw
+                    windows = [w.title for w in gw.getAllWindows() if w.title and w.visible]
+                except Exception:
+                    for p in psutil.process_iter(['name']):
+                        if p.info['name'] and p.info['name'].endswith('.exe'):
+                            windows.append(p.info['name'])
+            elif sys_name == "Darwin":
+                script = 'tell application "System Events" to get name of every process whose visible is true'
+                res = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+                if res.returncode == 0:
+                    windows = [w.strip() for w in res.stdout.strip().split(',') if w.strip()]
+            elif sys_name == "Linux":
+                res = subprocess.run(['wmctrl', '-l'], capture_output=True, text=True)
+                if res.returncode == 0:
+                    for line in res.stdout.strip().split('\n'):
+                        parts = line.split(maxsplit=3)
+                        if len(parts) >= 4:
+                            windows.append(parts[3])
+            return {"status": "success", "windows": windows}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @classmethod
+    def focus_window(cls, app_name: str) -> dict:
+        """Bring target application window to front cross-platform (Windows, macOS, Linux)."""
+        sys_name = cls._system()
+        target = app_name.lower().strip()
+        if not target:
+            return {"status": "error", "message": "No application name provided"}
+
+        try:
+            if sys_name == "Windows":
+                # Try pygetwindow first
+                try:
+                    import pygetwindow as gw
+                    matching = [w for w in gw.getAllWindows() if target in w.title.lower()]
+                    if matching:
+                        w = matching[0]
+                        if w.isMinimized:
+                            w.restore()
+                        w.activate()
+                        return {"status": "success", "action": "focus_window", "title": w.title}
+                except Exception:
+                    pass
+
+                # Fallback to Win32 API
+                import ctypes
+                user32 = ctypes.windll.user32
+                found = []
+
+                def enum_handler(hwnd, extra):
+                    if user32.IsWindowVisible(hwnd):
+                        length = user32.GetWindowTextLengthW(hwnd)
+                        if length > 0:
+                            buff = ctypes.create_unicode_buffer(length + 1)
+                            user32.GetWindowTextW(hwnd, buff, length + 1)
+                            title = buff.value
+                            if target in title.lower():
+                                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                                user32.SetForegroundWindow(hwnd)
+                                extra.append(title)
+                    return True
+
+                WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+                user32.EnumWindows(WNDENUMPROC(enum_handler), ctypes.py_object(found))
+
+                if found:
+                    return {"status": "success", "action": "focus_window", "title": found[0]}
+                return {"status": "error", "message": f"Window matching '{app_name}' not found"}
+
+            elif sys_name == "Darwin":
+                script = f'tell application "{app_name}" to activate'
+                res = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+                if res.returncode == 0:
+                    return {"status": "success", "action": "focus_window", "app": app_name}
+                subprocess.run(['open', '-a', app_name])
+                return {"status": "success", "action": "focus_window", "app": app_name}
+
+            elif sys_name == "Linux":
+                subprocess.run(['wmctrl', '-a', app_name])
+                return {"status": "success", "action": "focus_window", "app": app_name}
+
+            return {"status": "error", "message": f"Unsupported OS: {sys_name}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}

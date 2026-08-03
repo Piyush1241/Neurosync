@@ -16,3 +16,9 @@ build/
 coverage/
 .DS_Store
 *.db
+
+# Embedded Python & Desktop Build Artifacts
+python-embed/
+desktop-app/python-embed/
+desktop-app/dist/
+desktop-app/out/

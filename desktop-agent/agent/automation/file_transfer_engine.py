@@ -15,6 +15,8 @@ class FileTransferEngine:
                 target = os.path.expanduser("~")
             elif dir_path.startswith("~"):
                 target = os.path.expanduser(dir_path)
+            elif os.path.isabs(dir_path) or (len(dir_path) >= 2 and dir_path[1] == ":"):
+                target = os.path.abspath(dir_path)
             else:
                 home_candidate = os.path.expanduser(f"~/{dir_path}")
                 if os.path.exists(home_candidate):

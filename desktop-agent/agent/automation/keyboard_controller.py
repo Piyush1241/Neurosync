@@ -376,10 +376,186 @@ class KeyboardController:
 
     @staticmethod
     def take_screenshot_key() -> dict:
-        """Press PrintScreen."""
+        """Press screenshot hotkey (PrintScreen on Windows/Linux, Cmd+Shift+3 on macOS)."""
         try:
-            pyautogui.press("printscreen")
+            if platform.system() == "Darwin":
+                pyautogui.hotkey("command", "shift", "3")
+            else:
+                pyautogui.press("printscreen")
             return {"status": "success", "action": "screenshot"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    @staticmethod
+    def _capture_screen_pil():
+        """Capture screen across Windows (with input desktop attachment), macOS, and Linux."""
+        import platform
+        sys_name = platform.system()
+        
+        # On Windows, attach current thread to active interactive input desktop
+        if sys_name == "Windows":
+            try:
+                import ctypes
+                user32 = ctypes.windll.user32
+                # DESKTOP_READOBJECTS (0x0001) | DESKTOP_WRITEOBJECTS (0x0080) | DESKTOP_SWITCHDESKTOP (0x0100)
+                h_desktop = user32.OpenInputDesktop(0, False, 0x0100 | 0x0080 | 0x0001)
+                if h_desktop:
+                    user32.SetThreadDesktop(h_desktop)
+            except Exception:
+                pass
+
+        # 1. Try PIL ImageGrab directly
+        try:
+            from PIL import ImageGrab
+            img = ImageGrab.grab()
+            if img and img.getextrema() != ((0, 0), (0, 0), (0, 0)):
+                return img
+        except Exception:
+            pass
+
+        # 2. Try PyAutoGUI
+        try:
+            img = pyautogui.screenshot()
+            if img and img.getextrema() != ((0, 0), (0, 0), (0, 0)):
+                return img
+        except Exception:
+            pass
+
+        # 3. macOS Native screencapture fallback
+        if sys_name == "Darwin":
+            try:
+                import subprocess
+                import tempfile
+                import os
+                from PIL import Image
+                tmp_file = os.path.join(tempfile.gettempdir(), f"neurosync_mac_{os.getpid()}.png")
+                res = subprocess.run(["screencapture", "-x", tmp_file], capture_output=True)
+                if res.returncode == 0 and os.path.exists(tmp_file):
+                    img = Image.open(tmp_file)
+                    img.load()
+                    try:
+                        os.remove(tmp_file)
+                    except Exception:
+                        pass
+                    return img
+            except Exception:
+                pass
+
+        # 4. Windows Native GDI fallback with BGRX decoding
+        if sys_name == "Windows":
+            try:
+                import ctypes
+                from PIL import Image
+
+                user32 = ctypes.windll.user32
+                gdi32 = ctypes.windll.gdi32
+
+                try:
+                    user32.SetProcessDPIAware()
+                except Exception:
+                    pass
+
+                w = user32.GetSystemMetrics(0)
+                h = user32.GetSystemMetrics(1)
+
+                hdc_src = user32.GetDC(0)
+                hdc_mem = gdi32.CreateCompatibleDC(hdc_src)
+                hbmp = gdi32.CreateCompatibleBitmap(hdc_src, w, h)
+                gdi32.SelectObject(hdc_mem, hbmp)
+
+                # CAPTUREBLT (0x40000000) | SRCCOPY (0x00CC0020) = 0x40CC0020
+                gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_src, 0, 0, 0x40CC0020)
+
+                class BITMAPINFOHEADER(ctypes.Structure):
+                    _fields_ = [
+                        ('biSize', ctypes.c_uint32),
+                        ('biWidth', ctypes.c_int32),
+                        ('biHeight', ctypes.c_int32),
+                        ('biPlanes', ctypes.c_uint16),
+                        ('biBitCount', ctypes.c_uint16),
+                        ('biCompression', ctypes.c_uint32),
+                        ('biSizeImage', ctypes.c_uint32),
+                        ('biXPelsPerMeter', ctypes.c_int32),
+                        ('biYPelsPerMeter', ctypes.c_int32),
+                        ('biClrUsed', ctypes.c_uint32),
+                        ('biClrImportant', ctypes.c_uint32)
+                    ]
+
+                bmi = BITMAPINFOHEADER()
+                bmi.biSize = ctypes.sizeof(BITMAPINFOHEADER)
+                bmi.biWidth = w
+                bmi.biHeight = -h
+                bmi.biPlanes = 1
+                bmi.biBitCount = 32
+                bmi.biCompression = 0
+
+                buf = ctypes.create_string_buffer(w * h * 4)
+                gdi32.GetDIBits(hdc_mem, hbmp, 0, h, buf, ctypes.byref(bmi), 0)
+
+                # Decode as RGB from BGRX to avoid zero-alpha transparency issues
+                img = Image.frombuffer('RGB', (w, h), buf, 'raw', 'BGRX', 0, 1)
+
+                gdi32.DeleteObject(hbmp)
+                gdi32.DeleteDC(hdc_mem)
+                user32.ReleaseDC(0, hdc_src)
+
+                return img
+            except Exception as ex:
+                raise RuntimeError(f"Native Windows GDI screen grab failed: {ex}")
+
+        raise RuntimeError("Screen grab failed on this system")
+
+    @staticmethod
+    def take_screenshot(save_to_disk: bool = True) -> dict:
+        """Capture screen, save PNG file to Pictures/Screenshots, trigger OS screenshot key, and return base64 string."""
+        try:
+            import io
+            import base64
+            import datetime
+            import os
+            sys_name = platform.system()
+            
+            img = KeyboardController._capture_screen_pil()
+            
+            saved_path = None
+            if save_to_disk:
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"NeuroSync_Screenshot_{timestamp}.png"
+                
+                if sys_name == "Windows":
+                    pictures_dir = os.path.expanduser("~/Pictures/Screenshots")
+                    if not os.path.exists(pictures_dir):
+                        pictures_dir = os.path.expanduser("~/Pictures")
+                elif sys_name == "Darwin":
+                    pictures_dir = os.path.expanduser("~/Desktop")
+                else:
+                    pictures_dir = os.path.expanduser("~/Pictures")
+                
+                os.makedirs(pictures_dir, exist_ok=True)
+                saved_path = os.path.join(pictures_dir, filename)
+                img.save(saved_path, format="PNG")
+
+                # Trigger OS screenshot key for visual/notification response
+                try:
+                    if sys_name == "Windows":
+                        pyautogui.press("printscreen")
+                    elif sys_name == "Darwin":
+                        pyautogui.hotkey("command", "shift", "3")
+                except Exception:
+                    pass
+
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            b64_str = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+            return {
+                "status": "success",
+                "action": "take_screenshot",
+                "width": img.width,
+                "height": img.height,
+                "saved_path": saved_path,
+                "base64": b64_str
+            }
         except Exception as e:
             return {"status": "error", "message": str(e)}
 

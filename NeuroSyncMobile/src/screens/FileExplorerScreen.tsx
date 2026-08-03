@@ -44,9 +44,15 @@ export default function FileExplorerScreen({ route, navigation }: any) {
   }, []);
 
   const loadDirectory = async (dirPath: string) => {
+    if (!deviceId) {
+      Alert.alert('Device Error', 'Invalid device ID. Please return to the device list and try again.');
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const res = await sendCommand(deviceId, 'file_list_dir', { dir_path: dirPath });
+      const targetId = device.device_id || device.id || deviceId;
+      const res = await sendCommand(targetId, 'file_list_dir', { dir_path: dirPath });
       if (res && res.status === 'success') {
         setCurrentPath(res.display_path || res.current_path);
         setParentPath(res.parent_path);
@@ -55,7 +61,7 @@ export default function FileExplorerScreen({ route, navigation }: any) {
         Alert.alert('Access Restricted', res?.message || 'Could not list files in directory.');
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to connect to device filesystem');
+      Alert.alert('Connection Error', err.message || 'Failed to connect to device filesystem. Make sure the desktop agent is online.');
     } finally {
       setLoading(false);
     }

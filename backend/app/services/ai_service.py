@@ -51,6 +51,10 @@ SUPPORTED ACTIONS (use ONLY these):
 - minimize_window
 - maximize_window
 - close_window
+- focus_window       payload: {"app_name": "chrome"}
+- minimize_window
+- maximize_window
+- close_window
 - switch_window     payload: {"window_title": "Notepad"}
 - get_windows       (returns list of open windows)
 
@@ -64,24 +68,26 @@ SUPPORTED ACTIONS (use ONLY these):
 - get_running_processes
 
 ## Special Sequences
-For multi-step tasks like "open calculator and compute 3 + 5", think step by step:
-1. open_calculator
-2. Wait logic is handled by the backend (0.8s between steps)
-3. click_mouse on the right calculator buttons OR type_text the expression
-4. press_key "enter" or "="
+For typing text:
+- DO NOT open Notepad unless the user explicitly mentions "notepad"!
+- If the user asks to type or write without mentioning an application (e.g., "type Hello World", "write http://example.com"), ONLY send type_text so it types into whichever active window is currently open on their laptop:
+  [{"action": "type_text", "payload": {"text": "Hello World"}}]
+- If the user specifies an app to type in (e.g., "type hello in chrome", "type notes in word"):
+  First focus the target window, then type_text:
+  [{"action": "focus_window", "payload": {"app_name": "chrome"}}, {"action": "type_text", "payload": {"text": "hello"}}]
+- ONLY include open_notepad if the user explicitly says "notepad" or "open notepad"!
 
 IMPORTANT RULES:
 - Return ONLY valid JSON, no explanation, no markdown fences
 - For calculator: use click_mouse on button positions OR type the numbers with type_text then press "="
-- For typing in apps: always ensure the app/field is focused first
+- For typing in apps: type into the currently active window unless an app name is specified (then focus_window first)
 - Break complex tasks into logical sequential steps
-- If unsure of exact coordinates, use type_text + press_key approach (safer than coordinates)
 
 Return format:
 {
   "steps": [
-    {"action": "open_calculator"},
-    {"action": "type_text", "payload": {"text": "3+5"}},
+    {"action": "focus_window", "payload": {"app_name": "chrome"}},
+    {"action": "type_text", "payload": {"text": "hello"}},
     {"action": "press_key", "payload": {"key": "enter"}}
   ]
 }"""
@@ -152,7 +158,44 @@ class AIService:
             steps.append({"action": "open_excel"})
             if text_to_type:
                 steps.append({"action": "type_text", "payload": {"text": text_to_type}})
-        elif "calculator" in p or "calc" in p:
+            return {"steps": steps}
+
+        # 2. Chrome / Browser search or navigation
+        if "chrome" in p or "browser" in p:
+            if "search" in p or "find" in p or "google" in p:
+                query = prompt
+                for kw in ["open chrome and ", "open chrome ", "search ", "google ", "in chrome ", "on chrome "]:
+                    query = query.replace(kw, "")
+                query = query.strip()
+                if query:
+                    steps.append({"action": "open_chrome", "payload": {"url": f"https://www.google.com/search?q={query}"}})
+                else:
+                    steps.append({"action": "open_chrome", "payload": {"url": "https://www.google.com"}})
+            else:
+                steps.append({"action": "open_chrome"})
+            return {"steps": steps}
+
+        # 3. Generic typing / writing without opening Notepad
+        if p.startswith("type ") or p.startswith("write ") or "type " in p or "write " in p:
+            raw_text = prompt
+            if "type " in p:
+                raw_text = prompt.split("type ", 1)[1].strip()
+            elif "write " in p:
+                raw_text = prompt.split("write ", 1)[1].strip()
+
+            # Check if user specified a target app ("in chrome", "in word", "in discord")
+            if " in " in raw_text.lower():
+                parts = raw_text.lower().rsplit(" in ", 1)
+                text_content = raw_text[:len(parts[0])].strip()
+                target_app = parts[1].strip()
+                steps.append({"action": "focus_window", "payload": {"app_name": target_app}})
+                steps.append({"action": "type_text", "payload": {"text": text_content}})
+            else:
+                steps.append({"action": "type_text", "payload": {"text": raw_text}})
+            return {"steps": steps}
+
+        # 4. App launchers & utilities
+        if "calculator" in p or "calc" in p:
             steps.append({"action": "open_calculator"})
         elif "screenshot" in p:
             steps.append({"action": "take_screenshot"})

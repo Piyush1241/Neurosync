@@ -54,11 +54,11 @@ export default function FileExplorerScreen({ route, navigation }: any) {
       const targetId = device.device_id || device.id || deviceId;
       const res = await sendCommand(targetId, 'file_list_dir', { dir_path: dirPath });
       if (res && res.status === 'success') {
-        setCurrentPath(res.current_path);
+        setCurrentPath(res.display_path || res.current_path);
         setParentPath(res.parent_path);
         setFiles(res.entries || []);
       } else {
-        Alert.alert('Directory Error', res?.message || res?.error || 'Could not list files in directory.');
+        Alert.alert('Access Restricted', res?.message || 'Could not list files in directory.');
       }
     } catch (err: any) {
       Alert.alert('Connection Error', err.message || 'Failed to connect to device filesystem. Make sure the desktop agent is online.');

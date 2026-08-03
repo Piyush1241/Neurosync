@@ -12,6 +12,7 @@ class MobileAgentService {
   public async start() {
     if (this.ws) {
       this.stop();
+
     }
 
     const token = await AsyncStorage.getItem('auth_token');
@@ -29,7 +30,7 @@ class MobileAgentService {
 
     this.ws.onopen = () => {
       console.log('Mobile Agent connected to WS');
-      
+
       const osVersion = Platform.Version.toString();
       const osName = Platform.OS === 'ios' ? 'iOS' : 'Android';
 
@@ -45,7 +46,7 @@ class MobileAgentService {
         cpu: 'ARM',
         ram_gb: 4
       };
-      
+
       this.ws?.send(JSON.stringify(authMessage));
 
       this.heartbeatInterval = setInterval(() => {
@@ -125,52 +126,61 @@ class MobileAgentService {
   }
 
   private async listDir(dirPath: string) {
+    const extStorage = RNFS.ExternalStorageDirectoryPath; // /storage/emulated/0 on Android
+    const docPath = RNFS.DocumentDirectoryPath;
+    const isAndroidExt = Platform.OS === 'android' && extStorage;
+    const baseStorage = isAndroidExt ? extStorage : docPath;
+
     const isRoot = !dirPath || dirPath === '~' || dirPath === '/' || dirPath === 'ROOT' || dirPath.includes('Device Storage');
 
-    const docPath = RNFS.DocumentDirectoryPath;
-    const downloadsPath = `${docPath}/Downloads`;
-    const picturesPath = `${docPath}/Pictures`;
-
-    try { await RNFS.mkdir(downloadsPath); } catch {}
-    try { await RNFS.mkdir(picturesPath); } catch {}
+    let targetPath = dirPath;
+    let displayPath = dirPath;
 
     if (isRoot) {
-      const rootEntries: any[] = [
-        { name: 'Documents', path: docPath, type: 'folder', size: '—', modified: Date.now(), extension: '' },
-        { name: 'Downloads', path: downloadsPath, type: 'folder', size: '—', modified: Date.now(), extension: '' },
-        { name: 'Pictures', path: picturesPath, type: 'folder', size: '—', modified: Date.now(), extension: '' },
-      ];
+      targetPath = baseStorage;
+      displayPath = '~';
+    } else if (dirPath === 'Documents' || dirPath === '~/Documents' || dirPath === docPath) {
+      targetPath = isAndroidExt ? `${extStorage}/Documents` : docPath;
+      displayPath = '~/Documents';
+    } else if (dirPath === 'Downloads' || dirPath === '~/Downloads' || dirPath.endsWith('/Downloads') || dirPath.endsWith('/Download')) {
+      targetPath = isAndroidExt ? `${extStorage}/Download` : `${docPath}/Downloads`;
+      displayPath = '~/Downloads';
+    } else if (dirPath === 'Pictures' || dirPath === '~/Pictures' || dirPath === 'DCIM' || dirPath === '~/DCIM') {
+      targetPath = isAndroidExt ? `${extStorage}/DCIM` : `${docPath}/Pictures`;
+      displayPath = '~/Pictures';
+    } else if (dirPath === 'Desktop' || dirPath === '~/Desktop') {
+      targetPath = isAndroidExt ? `${extStorage}/Desktop` : docPath;
+      displayPath = '~/Desktop';
+    } else if (dirPath.startsWith('~')) {
+      const rel = dirPath.substring(1);
+      targetPath = `${baseStorage}${rel}`;
+      displayPath = dirPath;
+    } else if (dirPath.startsWith(baseStorage)) {
+      const rel = dirPath.substring(baseStorage.length);
+      displayPath = rel ? `~${rel}` : '~';
+    }
 
-      if (RNFS.CachesDirectoryPath) {
-        rootEntries.push({ name: 'App Caches', path: RNFS.CachesDirectoryPath, type: 'folder', size: '—', modified: Date.now(), extension: '' });
+    // Ensure directory exists if it's a standard subfolder
+    try {
+      if (!(await RNFS.exists(targetPath))) {
+        await RNFS.mkdir(targetPath);
       }
+    } catch { }
 
-      return {
-        status: 'success',
-        current_path: 'Device Storage (~)',
-        parent_path: 'Device Storage (~)',
-        entries: rootEntries
-      };
+    let items: any[] = [];
+    try {
+      items = await RNFS.readDir(targetPath);
+    } catch (e: any) {
+      return { status: 'error', message: `Access Denied: ${e.message || 'Cannot access directory'}` };
     }
 
-    let targetPath = dirPath;
-    if (dirPath === 'Documents' || dirPath === '~/Documents') targetPath = docPath;
-    else if (dirPath === 'Downloads' || dirPath === '~/Downloads') targetPath = downloadsPath;
-    else if (dirPath === 'Pictures' || dirPath === '~/Pictures') targetPath = picturesPath;
-    else if (dirPath === 'Desktop' || dirPath === '~/Desktop') targetPath = docPath;
-
-    if (!(await RNFS.exists(targetPath))) {
-      return { status: 'error', message: 'Directory not found' };
-    }
-
-    const items = await RNFS.readDir(targetPath);
     const entries = items.map(item => ({
       name: item.name,
-      path: item.path,
+      path: item.path.startsWith(baseStorage) ? `~${item.path.substring(baseStorage.length)}` : item.path,
       type: item.isDirectory() ? 'folder' : 'file',
       size: item.isDirectory() ? '—' : this.formatSize(item.size),
       size_bytes: item.size,
-      modified: item.mtime?.getTime() || 0,
+      modified: item.mtime?.getTime() || Date.now(),
       extension: item.name.includes('.') ? `.${item.name.split('.').pop()}` : ''
     }));
 
@@ -180,30 +190,48 @@ class MobileAgentService {
       return a.name.localeCompare(b.name);
     });
 
-    const isTopDoc = targetPath === docPath || targetPath === downloadsPath || targetPath === picturesPath;
-    const parentPath = isTopDoc ? 'Device Storage (~)' : (targetPath.substring(0, targetPath.lastIndexOf('/')) || 'Device Storage (~)');
+    const isTop = targetPath === baseStorage || displayPath === '~';
+    let parentPath = '~';
+    if (!isTop) {
+      const lastSlash = displayPath.lastIndexOf('/');
+      parentPath = lastSlash > 0 ? displayPath.substring(0, lastSlash) : '~';
+    }
 
     return {
       status: 'success',
       current_path: targetPath,
+      display_path: displayPath,
       parent_path: parentPath,
       entries: entries
     };
   }
 
+  private getAbsolutePath(filePath: string): string {
+    const extStorage = RNFS.ExternalStorageDirectoryPath;
+    const docPath = RNFS.DocumentDirectoryPath;
+    const isAndroidExt = Platform.OS === 'android' && extStorage;
+    const baseStorage = isAndroidExt ? extStorage : docPath;
+
+    if (!filePath || filePath === '~') return baseStorage;
+    if (filePath.startsWith('~')) return `${baseStorage}${filePath.substring(1)}`;
+    return filePath;
+  }
+
   private async readText(filePath: string) {
-    if (!(await RNFS.exists(filePath))) return { status: 'error', message: 'File not found' };
-    const content = await RNFS.readFile(filePath, 'utf8');
+    const target = this.getAbsolutePath(filePath);
+    if (!(await RNFS.exists(target))) return { status: 'error', message: 'File not found' };
+    const content = await RNFS.readFile(target, 'utf8');
     return { status: 'success', content };
   }
 
   private async saveText(filePath: string, content: string) {
-    await RNFS.writeFile(filePath, content, 'utf8');
+    const target = this.getAbsolutePath(filePath);
+    await RNFS.writeFile(target, content, 'utf8');
     return { status: 'success' };
   }
 
   private async readChunk(filePath: string, chunkIndex: number) {
-    const target = filePath === '~' ? RNFS.DocumentDirectoryPath : filePath;
+    const target = this.getAbsolutePath(filePath);
     if (!(await RNFS.exists(target))) return { status: 'error', message: 'File not found' };
 
     const stat = await RNFS.stat(target);
@@ -217,7 +245,7 @@ class MobileAgentService {
 
     const offset = chunkIndex * CHUNK_SIZE;
     const lengthToRead = Math.min(CHUNK_SIZE, totalSize - offset);
-    
+
     const chunkB64 = await RNFS.read(target, lengthToRead, offset, 'base64');
 
     return {

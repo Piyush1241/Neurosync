@@ -1,6 +1,7 @@
 import json
 import logging
 import asyncio
+# pyrefly: ignore [missing-import]
 from openai import AsyncOpenAI
 from app.config import settings
 
@@ -13,7 +14,9 @@ SUPPORTED ACTIONS (use ONLY these):
 
 ## App Control
 - open_notepad
-- open_chrome  
+- open_chrome         payload: {"url": "https://google.com"} (Use url parameter whenever a website or link is mentioned)
+- open_firefox        payload: {"url": "https://google.com"}
+- open_edge           payload: {"url": "https://google.com"}
 - open_calculator
 - open_explorer
 - open_app          payload: {"app_name": "spotify"}
@@ -100,15 +103,60 @@ class AIService:
         p = prompt.lower().strip()
         steps = []
 
-        # 1. Explicit Notepad request
+        # Check for URL or domain in prompt
+        words = p.split()
+        extracted_url = ""
+        for word in words:
+            clean_word = word.strip("'\":,")
+            if clean_word.startswith(("http://", "https://")) or ("." in clean_word and not clean_word.endswith(".") and len(clean_word.split(".")) >= 2 and not clean_word.startswith(".")):
+                if not clean_word.startswith(("http://", "https://")):
+                    extracted_url = "https://" + clean_word
+                else:
+                    extracted_url = clean_word
+                break
+
+        # Extract target app and text to type
+        target_app = None
         if "notepad" in p:
+            target_app = "notepad"
+        elif "chrome" in p or "browser" in p:
+            target_app = "chrome"
+        elif "vscode" in p or "code" in p:
+            target_app = "vscode"
+        elif "word" in p:
+            target_app = "word"
+        elif "excel" in p:
+            target_app = "excel"
+
+        text_to_type = None
+        if "type " in p:
+            text_to_type = prompt.split("type ", 1)[1].strip()
+        elif "write " in p:
+            text_to_type = prompt.split("write ", 1)[1].strip()
+
+        # If user explicitly asked for Chrome or a URL
+        if target_app == "chrome" or extracted_url:
+            payload = {}
+            if extracted_url:
+                payload["url"] = extracted_url
+            steps.append({"action": "open_chrome", "payload": payload})
+            if text_to_type and not extracted_url:
+                steps.append({"action": "type_text", "payload": {"text": text_to_type}})
+        elif target_app == "notepad":
             steps.append({"action": "open_notepad"})
-            text_to_type = None
-            if "type " in p:
-                text_to_type = prompt.split("type ", 1)[1].strip()
-            elif "write " in p:
-                text_to_type = prompt.split("write ", 1)[1].strip()
-            if text_to_type and "notepad" not in text_to_type:
+            if text_to_type:
+                steps.append({"action": "type_text", "payload": {"text": text_to_type}})
+        elif target_app == "vscode":
+            steps.append({"action": "open_vscode"})
+            if text_to_type:
+                steps.append({"action": "type_text", "payload": {"text": text_to_type}})
+        elif target_app == "word":
+            steps.append({"action": "open_word"})
+            if text_to_type:
+                steps.append({"action": "type_text", "payload": {"text": text_to_type}})
+        elif target_app == "excel":
+            steps.append({"action": "open_excel"})
+            if text_to_type:
                 steps.append({"action": "type_text", "payload": {"text": text_to_type}})
             return {"steps": steps}
 
@@ -163,6 +211,9 @@ class AIService:
             steps.append({"action": "shutdown_system"})
         elif "restart" in p:
             steps.append({"action": "restart_system"})
+        elif text_to_type:
+            # General fallback if no app was specified but user asked to type something
+            steps.append({"action": "type_text", "payload": {"text": text_to_type}})
 
         if steps:
             return {"steps": steps}

@@ -59,7 +59,12 @@ class AppLauncher:
         url_arg = [url] if url else []
 
         if sys == "Darwin":
-            return cls._launch(["open", "-a", "Google Chrome"] + url_arg, label="chrome")
+            import time
+            res = cls._launch(["open", "-a", "Google Chrome"] + url_arg, label="chrome")
+            cmd = 'osascript -e \'tell application "Google Chrome" to activate\''
+            os.system(cmd)
+            time.sleep(0.5)
+            return res
         elif sys == "Windows":
             chrome_paths = [
                 r"%PROGRAMFILES%\Google\Chrome\Application\chrome.exe",
@@ -140,10 +145,28 @@ class AppLauncher:
             for exe in candidates:
                 if os.path.exists(exe):
                     return cls._launch([exe] + ([path] if path else []), label="vscode")
-            return {"status": "error", "message": "VSCode not found"}
+            
+            # Fallback to other available IDEs / Editors if VS Code is missing
+            sublime_res = cls.open_sublime(path)
+            if sublime_res.get("status") == "success":
+                return sublime_res
+            pycharm_res = cls.open_pycharm(path)
+            if pycharm_res.get("status") == "success":
+                return pycharm_res
+            return cls.open_notepad(path)
         elif sys == "Linux":
-            return cls._launch(["code"] + ([path] if path else []), label="vscode")
-        return {"status": "error", "message": f"Unsupported OS: {sys}"}
+            if cls._which("code"):
+                return cls._launch(["code"] + ([path] if path else []), label="vscode")
+            sublime_res = cls.open_sublime(path)
+            if sublime_res.get("status") == "success":
+                return sublime_res
+            return cls.open_notepad(path)
+        
+        # macOS fallback
+        sublime_res = cls.open_sublime(path)
+        if sublime_res.get("status") == "success":
+            return sublime_res
+        return cls.open_notepad(path)
 
     @classmethod
     def open_notepad(cls, file_path: str = "") -> dict:

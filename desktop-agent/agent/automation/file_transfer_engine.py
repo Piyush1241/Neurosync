@@ -31,35 +31,47 @@ class FileTransferEngine:
                 return {"status": "error", "message": f"Path is not a directory: {dir_path}"}
 
             entries = []
-            with os.scandir(target) as it:
-                for entry in it:
-                    try:
-                        stat = entry.stat()
-                        is_dir = entry.is_dir()
-                        size_bytes = stat.st_size
-                        
-                        if is_dir:
-                            size_str = "—"
-                        elif size_bytes < 1024:
-                            size_str = f"{size_bytes} B"
-                        elif size_bytes < 1024 * 1024:
-                            size_str = f"{size_bytes / 1024:.1f} KB"
-                        elif size_bytes < 1024 * 1024 * 1024:
-                            size_str = f"{size_bytes / (1024 * 1024):.1f} MB"
-                        else:
-                            size_str = f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
+            try:
+                with os.scandir(target) as it:
+                    for entry in it:
+                        try:
+                            # Skip inaccessible system junction points or broken symlinks on Windows
+                            is_dir = entry.is_dir(follow_symlinks=False)
+                            size_bytes = 0
+                            mod_time = 0
+                            try:
+                                stat = entry.stat(follow_symlinks=False)
+                                size_bytes = stat.st_size
+                                mod_time = int(stat.st_mtime)
+                            except (PermissionError, OSError):
+                                pass
+                            
+                            if is_dir:
+                                size_str = "—"
+                            elif size_bytes < 1024:
+                                size_str = f"{size_bytes} B"
+                            elif size_bytes < 1024 * 1024:
+                                size_str = f"{size_bytes / 1024:.1f} KB"
+                            elif size_bytes < 1024 * 1024 * 1024:
+                                size_str = f"{size_bytes / (1024 * 1024):.1f} MB"
+                            else:
+                                size_str = f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
 
-                        entries.append({
-                            "name": entry.name,
-                            "path": entry.path,
-                            "type": "folder" if is_dir else "file",
-                            "size": size_str,
-                            "size_bytes": size_bytes,
-                            "modified": int(stat.st_mtime),
-                            "extension": os.path.splitext(entry.name)[1].lower() if not is_dir else ""
-                        })
-                    except Exception:
-                        continue
+                            entries.append({
+                                "name": entry.name,
+                                "path": entry.path,
+                                "type": "folder" if is_dir else "file",
+                                "size": size_str,
+                                "size_bytes": size_bytes,
+                                "modified": mod_time,
+                                "extension": os.path.splitext(entry.name)[1].lower() if not is_dir else ""
+                            })
+                        except (PermissionError, OSError):
+                            continue
+            except PermissionError:
+                return {"status": "error", "message": f"Access Denied: You do not have permission to access system directory '{dir_path}'."}
+            except OSError as os_err:
+                return {"status": "error", "message": f"Directory Access Error: {os_err}"}
 
             entries.sort(key=lambda x: (x["type"] != "folder", x["name"].lower()))
             
@@ -74,7 +86,10 @@ class FileTransferEngine:
                 "entries": entries,
                 "total_count": len(entries)
             }
+        except PermissionError:
+            return {"status": "error", "message": f"Access Denied: You do not have permission to access '{dir_path}'."}
         except Exception as e:
+            return {"status": "error", "message": str(e)}
             return {"status": "error", "message": str(e)}
 
     @staticmethod

@@ -421,7 +421,27 @@ class KeyboardController:
         except Exception:
             pass
 
-        # 3. Windows Native GDI fallback with BGRX decoding
+        # 3. macOS Native screencapture fallback
+        if sys_name == "Darwin":
+            try:
+                import subprocess
+                import tempfile
+                import os
+                from PIL import Image
+                tmp_file = os.path.join(tempfile.gettempdir(), f"neurosync_mac_{os.getpid()}.png")
+                res = subprocess.run(["screencapture", "-x", tmp_file], capture_output=True)
+                if res.returncode == 0 and os.path.exists(tmp_file):
+                    img = Image.open(tmp_file)
+                    img.load()
+                    try:
+                        os.remove(tmp_file)
+                    except Exception:
+                        pass
+                    return img
+            except Exception:
+                pass
+
+        # 4. Windows Native GDI fallback with BGRX decoding
         if sys_name == "Windows":
             try:
                 import ctypes

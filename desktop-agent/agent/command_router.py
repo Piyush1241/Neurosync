@@ -67,6 +67,7 @@ _REGISTRY: dict[str, dict] = {
     "type_text":        {"fn": lambda c: KeyboardController.type_text(c["text"], c.get("interval", 0.03)),    "required": ["text"]},
     "type_text_fast":   {"fn": lambda c: KeyboardController.type_text_fast(c["text"]),                        "required": ["text"]},
     "press_key":        {"fn": lambda c: KeyboardController.press_key(c["key"]),                              "required": ["key"]},
+    "press_enter":      {"fn": lambda c: KeyboardController.press_key("enter")},
     "key_down":         {"fn": lambda c: KeyboardController.key_down(c["key"]),                               "required": ["key"]},
     "key_up":           {"fn": lambda c: KeyboardController.key_up(c["key"]),                                 "required": ["key"]},
     "press_key_times":  {"fn": lambda c: KeyboardController.press_key_times(c["key"], c["count"], c.get("interval", 0.1)), "required": ["key", "count"]},

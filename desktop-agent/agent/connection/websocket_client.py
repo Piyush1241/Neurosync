@@ -108,8 +108,8 @@ class WebSocketClient:
         self._websocket = await websockets.connect(
             self.url,
             ssl=ssl_context,
-            ping_interval=20,
-            ping_timeout=10,
+            ping_interval=None,
+            ping_timeout=None,
             close_timeout=5,
         )
         self._conn_manager.set_websocket(self._websocket)

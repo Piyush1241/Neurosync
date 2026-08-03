@@ -12,6 +12,7 @@ class MobileAgentService {
   public async start() {
     if (this.ws) {
       this.stop();
+
     }
 
     const token = await AsyncStorage.getItem('auth_token');
@@ -29,7 +30,7 @@ class MobileAgentService {
 
     this.ws.onopen = () => {
       console.log('Mobile Agent connected to WS');
-      
+
       const osVersion = Platform.Version.toString();
       const osName = Platform.OS === 'ios' ? 'iOS' : 'Android';
 
@@ -45,7 +46,7 @@ class MobileAgentService {
         cpu: 'ARM',
         ram_gb: 4
       };
-      
+
       this.ws?.send(JSON.stringify(authMessage));
 
       this.heartbeatInterval = setInterval(() => {
@@ -164,7 +165,7 @@ class MobileAgentService {
       if (!(await RNFS.exists(targetPath))) {
         await RNFS.mkdir(targetPath);
       }
-    } catch {}
+    } catch { }
 
     let items: any[] = [];
     try {
@@ -244,7 +245,7 @@ class MobileAgentService {
 
     const offset = chunkIndex * CHUNK_SIZE;
     const lengthToRead = Math.min(CHUNK_SIZE, totalSize - offset);
-    
+
     const chunkB64 = await RNFS.read(target, lengthToRead, offset, 'base64');
 
     return {

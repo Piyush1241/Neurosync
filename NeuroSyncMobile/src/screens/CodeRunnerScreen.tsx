@@ -1,4 +1,4 @@
-// src/screens/CodeRunnerScreen.tsx — Remote Code Execution & Terminal Studio
+// src/screens/CodeRunnerScreen.tsx — Remote Code Execution & Terminal Studio (Vibrant High Contrast UI)
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -9,7 +9,7 @@ import { Colors, Fonts, Spacing, Radius } from '../theme';
 import { api } from '../services/apiClient';
 
 const TEMPLATES: Record<string, string> = {
-  python: `# NeuroSync Remote Python Executor\nimport sys, platform\n\nprint(f"🚀 Hello from {platform.system()} {platform.release()}!")\nprint(f"Python Executable: {sys.executable}")\n\nfor i in range(1, 4):\n    print(f"Task {i} executed in desktop terminal.")\n`,
+  python: `# NeuroSync Remote Python Executor\nimport sys, platform\n\nprint(f"🚀 Hello from {platform.system()} {platform.release()}!")\nprint(f"Python Executable: {sys.executable}")\n\nfor i in range(1, 4):\n    print(f"Task {i} executed successfully.")\n`,
   javascript: `// NeuroSync Remote Node.js Executor\nconst os = require('os');\n\nconsole.log(\`🚀 Running on \${os.hostname()} (\${os.type()} \${os.arch()})\`);\nconsole.log(\`Free Memory: \${(os.freemem() / 1024 / 1024).toFixed(0)} MB\`);\nconsole.log("Execution finished successfully!");\n`,
   shell: `# NeuroSync Remote Shell Executor\necho "🚀 System Status Check"\necho "Current Directory: $(pwd)"\necho "Host System: $(uname -a)"\n`,
   powershell: `# NeuroSync Remote PowerShell Executor\nWrite-Host "🚀 NeuroSync Remote PowerShell Studio"\nGet-Date\nGet-Process | Select-Object -First 5 ProcessName, CPU\n`
@@ -125,9 +125,9 @@ export function CodeRunnerScreen({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
+      <StatusBar barStyle="light-content" backgroundColor="#0b0d19" />
       
-      {/* Header */}
+      {/* Top Header Bar */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backText}>‹ BACK</Text>
@@ -139,67 +139,104 @@ export function CodeRunnerScreen({ route, navigation }: any) {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        {/* Device Picker */}
-        <Text style={styles.sectionLabel}>TARGET DESKTOP DEVICE</Text>
-        <View style={styles.devicePickerRow}>
-          {devices.map((d) => {
-            const active = d.device_id === selectedDeviceId;
-            const online = d.status === 'online';
-            return (
-              <TouchableOpacity
-                key={d.device_id}
-                onPress={() => setSelectedDeviceId(d.device_id)}
-                style={[
-                  styles.deviceChip,
-                  active && styles.deviceChipActive,
-                  !online && styles.deviceChipOffline
-                ]}
-              >
-                <Text style={[styles.deviceChipText, active && styles.deviceChipTextActive]}>
-                  {d.hostname || d.device_id} ({d.os || 'Desktop'})
-                </Text>
-                <View style={[styles.statusDot, { backgroundColor: online ? Colors.online : Colors.offline }]} />
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        
+        {/* Step 1: Target Desktop Device */}
+        <Text style={styles.sectionHeader}>1. SELECT TARGET DESKTOP DEVICE</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+          {devices.length === 0 ? (
+            <Text style={styles.noDeviceText}>No devices registered. Launch desktop agent to connect.</Text>
+          ) : (
+            devices.map((d) => {
+              const active = d.device_id === selectedDeviceId;
+              const online = d.status === 'online';
+              return (
+                <TouchableOpacity
+                  key={d.device_id}
+                  onPress={() => setSelectedDeviceId(d.device_id)}
+                  style={[
+                    styles.deviceCard,
+                    active && styles.deviceCardActive,
+                    !online && styles.deviceCardOffline
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.deviceTopRow}>
+                    <Text style={[styles.deviceName, active && styles.deviceNameActive]}>
+                      {d.hostname || d.device_id}
+                    </Text>
+                    <View style={[styles.statusBadge, { backgroundColor: online ? '#00ff88' : '#ff3d3d' }]} />
+                  </View>
+                  <Text style={styles.deviceMeta}>
+                    {d.os || 'Desktop'} · {online ? 'ONLINE' : 'OFFLINE'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </ScrollView>
 
-        {/* Execution Mode Selector */}
-        <Text style={styles.sectionLabel}>EXECUTION MODE</Text>
-        <View style={styles.modeRow}>
-          <TouchableOpacity
-            onPress={() => setExecMode('terminal')}
-            style={[styles.modeChip, execMode === 'terminal' && styles.modeChipActive]}
-          >
-            <Text style={[styles.modeText, execMode === 'terminal' && styles.modeTextActive]}>
-              🖥️ Interactive Terminal Window
+        {/* Step 2: Execution Mode */}
+        <Text style={styles.sectionHeader}>2. CHOOSE HOW TO EXECUTE</Text>
+        
+        <TouchableOpacity
+          onPress={() => setExecMode('terminal')}
+          style={[styles.modeCard, execMode === 'terminal' && styles.modeCardActive]}
+          activeOpacity={0.8}
+        >
+          <View style={styles.modeIconBox}>
+            <Text style={styles.modeIcon}>🖥️</Text>
+          </View>
+          <View style={styles.modeTextCol}>
+            <Text style={[styles.modeTitle, execMode === 'terminal' && styles.modeTitleActive]}>
+              Interactive Terminal Window
             </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setExecMode('ide')}
-            style={[styles.modeChip, execMode === 'ide' && styles.modeChipActive]}
-          >
-            <Text style={[styles.modeText, execMode === 'ide' && styles.modeTextActive]}>
-              💻 Open in IDE
+            <Text style={styles.modeDesc}>
+              Opens a visible PowerShell / Terminal window on Desktop. Uses your local Python/pip packages & venvs.
             </Text>
-          </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => setExecMode('background')}
-            style={[styles.modeChip, execMode === 'background' && styles.modeChipActive]}
-          >
-            <Text style={[styles.modeText, execMode === 'background' && styles.modeTextActive]}>
-              ⚡ Background Console
+        <TouchableOpacity
+          onPress={() => setExecMode('ide')}
+          style={[styles.modeCard, execMode === 'ide' && styles.modeCardActive]}
+          activeOpacity={0.8}
+        >
+          <View style={styles.modeIconBox}>
+            <Text style={styles.modeIcon}>💻</Text>
+          </View>
+          <View style={styles.modeTextCol}>
+            <Text style={[styles.modeTitle, execMode === 'ide' && styles.modeTitleActive]}>
+              Open in VS Code / IDE
             </Text>
-          </TouchableOpacity>
-        </View>
+            <Text style={styles.modeDesc}>
+              Transfers script and opens it directly in VS Code, PyCharm, or Notepad on your Desktop.
+            </Text>
+          </View>
+        </TouchableOpacity>
 
-        {/* IDE Selector (if IDE mode selected) */}
+        <TouchableOpacity
+          onPress={() => setExecMode('background')}
+          style={[styles.modeCard, execMode === 'background' && styles.modeCardActive]}
+          activeOpacity={0.8}
+        >
+          <View style={styles.modeIconBox}>
+            <Text style={styles.modeIcon}>⚡</Text>
+          </View>
+          <View style={styles.modeTextCol}>
+            <Text style={[styles.modeTitle, execMode === 'background' && styles.modeTitleActive]}>
+              Background Streamer
+            </Text>
+            <Text style={styles.modeDesc}>
+              Executes in background and streams stdout/stderr back to your mobile screen.
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* IDE Selector */}
         {execMode === 'ide' && (
-          <View style={{ marginBottom: 8 }}>
-            <Text style={styles.sectionLabel}>SELECT IDE / EDITOR</Text>
-            <View style={styles.langRow}>
+          <View style={styles.ideContainer}>
+            <Text style={styles.subHeader}>SELECT IDE / TEXT EDITOR:</Text>
+            <View style={styles.tabRow}>
               {[
                 { id: 'vscode', label: '🟦 VS Code' },
                 { id: 'pycharm', label: '🐍 PyCharm' },
@@ -208,18 +245,18 @@ export function CodeRunnerScreen({ route, navigation }: any) {
                 <TouchableOpacity
                   key={item.id}
                   onPress={() => setSelectedIde(item.id as any)}
-                  style={[styles.langChip, selectedIde === item.id && styles.langChipActive]}
+                  style={[styles.tabChip, selectedIde === item.id && styles.tabChipActive]}
                 >
-                  <Text style={[styles.langText, selectedIde === item.id && styles.langTextActive]}>{item.label}</Text>
+                  <Text style={[styles.tabText, selectedIde === item.id && styles.tabTextActive]}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         )}
 
-        {/* Language Tabs */}
-        <Text style={styles.sectionLabel}>PROGRAMMING LANGUAGE</Text>
-        <View style={styles.langRow}>
+        {/* Step 3: Programming Language */}
+        <Text style={styles.sectionHeader}>3. PROGRAMMING LANGUAGE</Text>
+        <View style={styles.tabRow}>
           {[
             { id: 'python', label: '🐍 Python' },
             { id: 'javascript', label: '🟩 Node.js' },
@@ -229,27 +266,27 @@ export function CodeRunnerScreen({ route, navigation }: any) {
             <TouchableOpacity
               key={l.id}
               onPress={() => handleLanguageChange(l.id)}
-              style={[styles.langChip, language === l.id && styles.langChipActive]}
+              style={[styles.tabChip, language === l.id && styles.tabChipActive]}
             >
-              <Text style={[styles.langText, language === l.id && styles.langTextActive]}>{l.label}</Text>
+              <Text style={[styles.tabText, language === l.id && styles.tabTextActive]}>{l.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Code Input Area */}
-        <View style={styles.editorHeader}>
-          <Text style={styles.sectionLabel}>CODE EDITOR</Text>
+        {/* Step 4: Code Editor */}
+        <View style={styles.editorHeaderRow}>
+          <Text style={styles.sectionHeader}>4. CODE EDITOR</Text>
           <TextInput
-            style={styles.filenameInput}
+            style={styles.filenameBox}
             value={filename}
             onChangeText={setFilename}
             placeholder="filename"
-            placeholderTextColor={Colors.muted}
+            placeholderTextColor="#8892b0"
           />
         </View>
 
         <TextInput
-          style={styles.editorInput}
+          style={styles.editorTextarea}
           value={code}
           onChangeText={setCode}
           multiline
@@ -258,27 +295,28 @@ export function CodeRunnerScreen({ route, navigation }: any) {
           spellCheck={false}
         />
 
-        {/* Action Button */}
+        {/* Main Action Button */}
         <TouchableOpacity
-          style={[styles.runBtn, (!isOnline || executing) && styles.runBtnDisabled]}
+          style={[styles.actionButton, (!isOnline || executing) && styles.actionButtonDisabled]}
           onPress={handleRunCode}
           disabled={executing}
+          activeOpacity={0.85}
         >
           {executing ? (
-            <ActivityIndicator color={Colors.bg} />
+            <ActivityIndicator color="#ffffff" size="small" />
           ) : (
-            <Text style={styles.runBtnText}>
-              {execMode === 'terminal' ? '🖥️ RUN IN TERMINAL WINDOW' : (execMode === 'ide' ? `💻 OPEN IN ${selectedIde.toUpperCase()}` : '⚡ RUN IN BACKGROUND')}
+            <Text style={styles.actionButtonText}>
+              {execMode === 'terminal' ? '🚀 RUN IN DESKTOP TERMINAL' : (execMode === 'ide' ? `💻 OPEN IN ${selectedIde.toUpperCase()}` : '⚡ RUN IN BACKGROUND')}
             </Text>
           )}
         </TouchableOpacity>
 
-        {/* Terminal Output */}
-        <View style={styles.terminalHeader}>
-          <Text style={styles.sectionLabel}>REMOTE EXECUTION OUTPUT</Text>
+        {/* Step 5: Remote Execution Output */}
+        <View style={styles.outputHeaderRow}>
+          <Text style={styles.sectionHeader}>5. DESKTOP EXECUTION OUTPUT</Text>
           {output && (
             <TouchableOpacity onPress={copyConsoleOutput}>
-              <Text style={styles.copyText}>COPY OUTPUT</Text>
+              <Text style={styles.copyBtnText}>COPY OUTPUT</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -286,45 +324,43 @@ export function CodeRunnerScreen({ route, navigation }: any) {
         <View style={styles.terminalBox}>
           {!output && !executing && (
             <Text style={styles.terminalPlaceholder}>
-              Tap "RUN IN TERMINAL WINDOW" to launch script on Desktop preserving local packages & environments.
+              Tap the bright magenta button above to execute script on Desktop.
             </Text>
           )}
 
           {executing && (
-            <View style={styles.terminalExecRow}>
-              <ActivityIndicator color={Colors.cyan} size="small" />
-              <Text style={styles.terminalExecText}>Launching on {selectedDevice?.hostname || 'Desktop'}...</Text>
+            <View style={styles.executingRow}>
+              <ActivityIndicator color="#00f3ff" size="small" />
+              <Text style={styles.executingText}>Launching script on {selectedDevice?.hostname || 'Desktop'}...</Text>
             </View>
           )}
 
           {output && (
             <View>
-              {/* Execution Summary Bar */}
-              <View style={styles.execSummaryRow}>
-                <Text style={[styles.execBadge, { color: output.exit_code === 0 ? Colors.green : Colors.red }]}>
+              <View style={styles.summaryBar}>
+                <Text style={[styles.summaryBadge, { color: output.exit_code === 0 ? '#00ff88' : '#ff3d3d' }]}>
                   {output.exit_code === 0 ? '✓ SUCCESS' : `✕ FAILED (EXIT ${output.exit_code})`}
                 </Text>
-                <Text style={styles.execDuration}>{output.duration_ms || 0} ms</Text>
+                <Text style={styles.summaryTime}>{output.duration_ms || 0} ms</Text>
               </View>
 
-              {/* STDOUT */}
               {!!output.stdout && (
-                <View style={styles.outBlock}>
-                  <Text style={styles.outHeader}>[DESKTOP RESPONSE]</Text>
-                  <Text style={styles.stdoutText}>{output.stdout}</Text>
+                <View style={styles.outputBlock}>
+                  <Text style={styles.stdoutTitle}>[DESKTOP STDOUT]</Text>
+                  <Text style={styles.stdoutContent}>{output.stdout}</Text>
                 </View>
               )}
 
-              {/* STDERR */}
               {!!output.stderr && (
-                <View style={styles.outBlock}>
-                  <Text style={styles.errHeader}>[STDERR]</Text>
-                  <Text style={styles.stderrText}>{output.stderr}</Text>
+                <View style={styles.outputBlock}>
+                  <Text style={styles.stderrTitle}>[DESKTOP STDERR]</Text>
+                  <Text style={styles.stderrContent}>{output.stderr}</Text>
                 </View>
               )}
             </View>
           )}
         </View>
+
       </ScrollView>
     </View>
   );
@@ -333,134 +369,179 @@ export function CodeRunnerScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bg,
+    backgroundColor: '#0b0d19',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: 16,
     paddingVertical: 14,
+    backgroundColor: '#13172e',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.pinkGlow,
-    backgroundColor: Colors.cardBg,
+    borderBottomColor: '#fc1ff955',
   },
   backBtn: { padding: 4 },
-  backText: { fontFamily: Fonts.ui, fontSize: 11, fontWeight: '700', color: Colors.cyan },
-  headerTitle: { fontFamily: Fonts.ui, fontSize: 13, fontWeight: '800', color: Colors.pink, letterSpacing: 1.5 },
+  backText: { fontFamily: Fonts.ui, fontSize: 12, fontWeight: '800', color: '#00f3ff' },
+  headerTitle: { fontFamily: Fonts.ui, fontSize: 14, fontWeight: '900', color: '#fc1ff9', letterSpacing: 2 },
   refreshBtn: { padding: 4 },
-  refreshText: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.cyan },
+  refreshText: { fontFamily: Fonts.mono, fontSize: 11, color: '#00f3ff', fontWeight: '700' },
+
   scroll: { flex: 1 },
-  scrollContent: { padding: Spacing.md },
-  sectionLabel: {
+  scrollContent: { padding: 16 },
+
+  sectionHeader: {
+    fontFamily: Fonts.ui,
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#00f3ff',
+    letterSpacing: 1.5,
+    marginTop: 14,
+    marginBottom: 10,
+  },
+  subHeader: {
     fontFamily: Fonts.ui,
     fontSize: 10,
     fontWeight: '700',
-    color: Colors.muted,
-    letterSpacing: 1.5,
+    color: '#ffffff',
+    letterSpacing: 1,
     marginBottom: 8,
-    marginTop: 12,
   },
-  devicePickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  deviceChip: {
+
+  // Devices Horizontal Row
+  horizontalScroll: { marginBottom: 8 },
+  noDeviceText: { color: '#8892b0', fontFamily: Fonts.mono, fontSize: 11, paddingVertical: 10 },
+  deviceCard: {
+    backgroundColor: '#14182b',
+    borderWidth: 1,
+    borderColor: '#00f3ff44',
+    borderRadius: 10,
+    padding: 12,
+    marginRight: 10,
+    minWidth: 160,
+  },
+  deviceCardActive: {
+    borderColor: '#fc1ff9',
+    backgroundColor: 'rgba(252, 31, 249, 0.15)',
+  },
+  deviceCardOffline: { opacity: 0.5 },
+  deviceTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  deviceName: { fontFamily: Fonts.display, fontSize: 14, color: '#ffffff', fontWeight: '700' },
+  deviceNameActive: { color: '#fc1ff9' },
+  statusBadge: { width: 8, height: 8, borderRadius: 4 },
+  deviceMeta: { fontFamily: Fonts.mono, fontSize: 10, color: '#8892b0' },
+
+  // Execution Mode Cards
+  modeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.cardBg,
+    backgroundColor: '#14182b',
     borderWidth: 1,
-    borderColor: Colors.cyanGlow,
+    borderColor: '#00f3ff44',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
   },
-  deviceChipActive: { borderColor: Colors.pink, backgroundColor: 'rgba(252, 31, 249, 0.1)' },
-  deviceChipOffline: { opacity: 0.6 },
-  deviceChipText: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.textDim },
-  deviceChipTextActive: { color: Colors.pink, fontWeight: '700' },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
-  modeRow: { flexDirection: 'column', gap: 6, marginBottom: 8 },
-  modeChip: {
+  modeCardActive: {
+    borderColor: '#fc1ff9',
+    backgroundColor: 'rgba(252, 31, 249, 0.15)',
+  },
+  modeIconBox: { width: 40, height: 40, borderRadius: 8, backgroundColor: '#0b0d19', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  modeIcon: { fontSize: 20 },
+  modeTextCol: { flex: 1 },
+  modeTitle: { fontFamily: Fonts.ui, fontSize: 13, fontWeight: '700', color: '#ffffff', marginBottom: 2 },
+  modeTitleActive: { color: '#fc1ff9' },
+  modeDesc: { fontFamily: Fonts.body, fontSize: 11, color: '#a0aec0', lineHeight: 15 },
+
+  ideContainer: { marginTop: 4, marginBottom: 8, padding: 10, backgroundColor: '#14182b', borderRadius: 10, borderWidth: 1, borderColor: '#00f3ff33' },
+
+  // Tabs (Languages & IDEs)
+  tabRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  tabChip: {
+    backgroundColor: '#14182b',
+    borderWidth: 1,
+    borderColor: '#00f3ff55',
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.cardBg,
-    borderWidth: 1,
-    borderColor: Colors.cyanGlow,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
-  modeChipActive: { borderColor: Colors.pink, backgroundColor: 'rgba(252, 31, 249, 0.12)' },
-  modeText: { fontFamily: Fonts.ui, fontSize: 11, fontWeight: '600', color: Colors.textDim },
-  modeTextActive: { color: Colors.pink, fontWeight: '700' },
-  langRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  langChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.cardBg,
-    borderWidth: 1,
-    borderColor: Colors.cyanGlow,
+  tabChipActive: {
+    backgroundColor: '#fc1ff9',
+    borderColor: '#fc1ff9',
   },
-  langChipActive: { borderColor: Colors.pink, backgroundColor: Colors.pinkGlow },
-  langText: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.textDim },
-  langTextActive: { color: Colors.pink, fontWeight: '700' },
-  editorHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  filenameInput: {
-    backgroundColor: Colors.cardBg,
-    color: Colors.cyan,
+  tabText: { fontFamily: Fonts.mono, fontSize: 12, color: '#ffffff', fontWeight: '600' },
+  tabTextActive: { color: '#ffffff', fontWeight: '800' },
+
+  // Code Editor
+  editorHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  filenameBox: {
+    backgroundColor: '#14182b',
+    color: '#00f3ff',
     fontFamily: Fonts.mono,
     fontSize: 11,
-    paddingHorizontal: 8,
+    fontWeight: '700',
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: Colors.cyanGlow,
+    borderColor: '#00f3ff55',
   },
-  editorInput: {
-    backgroundColor: '#0a0b12',
-    color: '#e0e6ed',
+  editorTextarea: {
+    backgroundColor: '#050710',
+    color: '#00ff88',
     fontFamily: Fonts.mono,
     fontSize: 12,
-    padding: 12,
-    borderRadius: Radius.md,
+    padding: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.cyanGlow,
+    borderColor: '#00f3ff55',
     minHeight: 160,
     maxHeight: 240,
     textAlignVertical: 'top',
+    marginTop: 4,
   },
-  runBtn: {
-    backgroundColor: Colors.pink,
-    paddingVertical: 14,
-    borderRadius: Radius.md,
+
+  // Main Action Button
+  actionButton: {
+    backgroundColor: '#fc1ff9',
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
     marginVertical: 16,
-    shadowColor: Colors.pink,
+    shadowColor: '#fc1ff9',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  runBtnDisabled: { opacity: 0.5, backgroundColor: Colors.cardBg },
-  runBtnText: { fontFamily: Fonts.ui, fontSize: 12, fontWeight: '800', color: '#000', letterSpacing: 1.5 },
-  terminalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  copyText: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.cyan },
+  actionButtonDisabled: { opacity: 0.4, backgroundColor: '#333b5c' },
+  actionButtonText: { fontFamily: Fonts.ui, fontSize: 13, fontWeight: '900', color: '#ffffff', letterSpacing: 1.5 },
+
+  // Output
+  outputHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  copyBtnText: { fontFamily: Fonts.mono, fontSize: 10, color: '#00f3ff', fontWeight: '700' },
   terminalBox: {
-    backgroundColor: '#05060a',
+    backgroundColor: '#050710',
     borderWidth: 1,
-    borderColor: Colors.cyanGlow,
-    borderRadius: Radius.md,
-    padding: 12,
+    borderColor: '#00f3ff44',
+    borderRadius: 12,
+    padding: 14,
     minHeight: 120,
+    marginBottom: 40,
   },
-  terminalPlaceholder: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.muted, textAlign: 'center', marginTop: 24 },
-  terminalExecRow: { flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'center', marginTop: 24 },
-  terminalExecText: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.cyan },
-  execSummaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, borderBottomWidth: 1, borderBottomColor: '#1e2436', paddingBottom: 6 },
-  execBadge: { fontFamily: Fonts.ui, fontSize: 10, fontWeight: '800', letterSpacing: 1 },
-  execDuration: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.muted },
-  outBlock: { marginBottom: 10 },
-  outHeader: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.cyan, fontWeight: '700', marginBottom: 2 },
-  errHeader: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.red, fontWeight: '700', marginBottom: 2 },
-  stdoutText: { fontFamily: Fonts.mono, fontSize: 11, color: '#00ff88', lineHeight: 18 },
-  stderrText: { fontFamily: Fonts.mono, fontSize: 11, color: '#ff3d3d', lineHeight: 18 },
+  terminalPlaceholder: { fontFamily: Fonts.mono, fontSize: 11, color: '#8892b0', textAlign: 'center', marginTop: 24 },
+  executingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'center', marginTop: 24 },
+  executingText: { fontFamily: Fonts.mono, fontSize: 11, color: '#00f3ff' },
+
+  summaryBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#1a2238', paddingBottom: 8, marginBottom: 10 },
+  summaryBadge: { fontFamily: Fonts.ui, fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+  summaryTime: { fontFamily: Fonts.mono, fontSize: 10, color: '#8892b0' },
+  outputBlock: { marginBottom: 10 },
+  stdoutTitle: { fontFamily: Fonts.mono, fontSize: 10, color: '#00f3ff', fontWeight: '700', marginBottom: 2 },
+  stderrTitle: { fontFamily: Fonts.mono, fontSize: 10, color: '#ff3d3d', fontWeight: '700', marginBottom: 2 },
+  stdoutContent: { fontFamily: Fonts.mono, fontSize: 11, color: '#00ff88', lineHeight: 18 },
+  stderrContent: { fontFamily: Fonts.mono, fontSize: 11, color: '#ff3d3d', lineHeight: 18 },
 });
 
 export default CodeRunnerScreen;

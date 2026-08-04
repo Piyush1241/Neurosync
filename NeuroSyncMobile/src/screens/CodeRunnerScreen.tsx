@@ -16,7 +16,7 @@ const TEMPLATES: Record<string, string> = {
 };
 
 export function CodeRunnerScreen({ route, navigation }: any) {
-  const initialDeviceId = route?.params?.deviceId || '';
+  const initialDeviceId = route?.params?.deviceId || route?.params?.device?.device_id || route?.params?.device?.id || '';
   const [devices, setDevices] = useState<any[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>(initialDeviceId);
   const [language, setLanguage] = useState<string>('python');
@@ -38,6 +38,10 @@ export function CodeRunnerScreen({ route, navigation }: any) {
 
   const fetchDevices = async () => {
     try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      }
       const res = await api.get('/api/v1/devices');
       const devList = res.data?.devices || res.data || res.devices || (Array.isArray(res) ? res : []);
       if (Array.isArray(devList)) {
@@ -54,6 +58,10 @@ export function CodeRunnerScreen({ route, navigation }: any) {
 
   const fetchDevicesQuietly = async () => {
     try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      }
       const res = await api.get('/api/v1/devices');
       const devList = res.data?.devices || res.data || res.devices || (Array.isArray(res) ? res : []);
       if (Array.isArray(devList)) {

@@ -30,20 +30,36 @@ export function CodeRunnerScreen({ route, navigation }: any) {
 
   useEffect(() => {
     fetchDevices();
+    const interval = setInterval(() => {
+      fetchDevicesQuietly();
+    }, 8000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchDevices = async () => {
     try {
       const res = await api.get('/api/v1/devices');
-      if (Array.isArray(res)) {
-        setDevices(res);
-        if (!selectedDeviceId && res.length > 0) {
-          setSelectedDeviceId(res[0].device_id);
+      const devList = res.data?.devices || res.data || res.devices || (Array.isArray(res) ? res : []);
+      if (Array.isArray(devList)) {
+        setDevices(devList);
+        if (!selectedDeviceId && devList.length > 0) {
+          const onlineDev = devList.find((d: any) => d.status === 'online');
+          setSelectedDeviceId(onlineDev ? onlineDev.device_id : devList[0].device_id);
         }
       }
     } catch (e) {
       console.warn('Could not fetch devices list:', e);
     }
+  };
+
+  const fetchDevicesQuietly = async () => {
+    try {
+      const res = await api.get('/api/v1/devices');
+      const devList = res.data?.devices || res.data || res.devices || (Array.isArray(res) ? res : []);
+      if (Array.isArray(devList)) {
+        setDevices(devList);
+      }
+    } catch (e) {}
   };
 
   const handleLanguageChange = (lang: string) => {
@@ -76,7 +92,7 @@ export function CodeRunnerScreen({ route, navigation }: any) {
         return;
       }
 
-      const res: any = await api.post('/api/v1/devices/command', {
+      const response: any = await api.post('/api/v1/devices/command', {
         device_id: selectedDeviceId,
         action: 'remote_code_exec',
         payload: {
@@ -89,7 +105,9 @@ export function CodeRunnerScreen({ route, navigation }: any) {
         }
       });
 
-      if (res && res.status === 'success') {
+      const res = response.data || response;
+
+      if (res && (res.status === 'success' || res.status === 'ok')) {
         setOutput(res);
       } else {
         setOutput({
@@ -108,6 +126,10 @@ export function CodeRunnerScreen({ route, navigation }: any) {
         exit_code: 1,
         duration_ms: 0
       });
+    } finally {
+      setExecuting(false);
+    }
+  };
     } finally {
       setExecuting(false);
     }
